@@ -1,0 +1,179 @@
+
+/* General element styles */
+*{
+    line-height: normal;
+    font-weight: 400; /* Regular */
+}
+
+body{
+    font-family: "Nunito Sans", /* Our custom font import order*/
+    "Ubuntu", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; /* Bootstrap sans-serif font imports */
+}
+
+div{
+    line-height: 0;
+}
+
+h3{
+    font-weight: 900; /* Black */
+    color: #7413DC;
+    font-size: calc(var(--vmin-em) * 2.4);
+    margin: 0;
+    line-height: 1;
+    letter-spacing: normal;
+}
+
+
+/* General page styles */
+.reports-page{
+    height: 100vh;
+    display: flex;
+    flex-flow: column nowrap;
+    align-content: flex-start;
+}
+
+.report-container{
+    position: relative;
+
+    flex-grow: 1;
+    display: flex;
+    flex-flow: column nowrap;
+    justify-content: center;
+
+    height: 90vmin;
+    width: calc(90vmin * 1.5); /* width = 1.5* height */
+    margin: auto;
+    background-color: white;
+    padding-left: calc(90vmin * 1.5 * 0.021); /* L/R padding is 4.2% of width */
+    padding-right: calc(90vmin * 1.5 * 0.021); /* L/R padding is 4.2% of width */
+}
+
+/* Header styles */
+.report-header{
+    display:flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-left: calc(var(--vmin-em) * 0.5);
+    margin-right: calc(var(--vmin-em) * 2);
+    margin-bottom: calc(var(--vmin-em) * 1.5);
+    padding-top: calc(var(--vmin-em) * 2);
+}
+
+.legend br{
+    line-height: 0;
+}
+
+.legend-text{
+    display: inline-block;
+    font-size: calc(var(--vmin-em) * 0.9);
+    margin: calc(var(--vmin-em) * 0.2);
+}
+
+.legend-text:not(:first-child){
+    margin-left: calc(var(--vmin-em) * 2);
+}
+
+.logo{
+    text-align: center;
+}
+
+.logo-image{
+    width: calc(var(--vmin-em) * 9.375);
+    height: auto;
+}
+
+.logo-text{
+    display: block;
+    margin: auto;
+    font-weight: 900; /* Black */
+    font-size: calc(var(--vmin-em) * 1.25);
+    color: #7413DC;
+}
+
+/* Compliance components styles */
+.compliance-components{
+    display:flex;
+    justify-content: space-between;
+}
+
+.compliance-components > div{
+    color: white;
+    width: 12.15%;
+    height: 62vh;
+    padding: calc(var(--vmin-em) * 1);
+    border-radius: calc(var(--vmin-em) * 1.25);
+}
+
+.component-info{
+    display: flex;
+    flex-direction: column;
+}
+
+.component-info > div{
+    flex-basis: 0;
+}
+
+.component-info span{
+    font-size: calc(var(--vmin-em) * 0.8);;
+}
+
+.component-header{
+    font-weight: 900; /* Black */
+    font-size: calc(var(--vmin-em) * 1.15);
+    padding: 0 0 calc(var(--vmin-em) * 1);
+    margin: 0;
+    letter-spacing: normal;
+}
+
+span.component-description{
+    font-size: calc(var(--vmin-em) * 0.834);
+}
+
+.component-summary{
+    flex-grow: 2;
+}
+
+.component-stats{
+    flex-grow: 3;
+}
+.component-stats > div{
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    height: calc(var(--vmin-em) * 2.4);
+    padding: calc(var(--vmin-em) * 0.3) calc(var(--vmin-em) * 0.65);
+    border-radius: calc(var(--vmin-em) * 0.3);
+    margin-left: calc(var(--vmin-em) * -0.3);
+    margin-right: calc(var(--vmin-em) * -0.3);
+}
+
+.component-aim{
+    background-color: white;
+    color: black;
+}
+
+.compliant{
+    background-color: green;
+}
+
+.non-compliant{
+    background-color: red;
+}
+
+.roles-reminder{
+    position: absolute;
+    width: 60vmin;
+    right: 5vmin;
+    bottom: 25vmin;
+    text-align: center;
+    background-color: #FFC000;
+    padding: calc(var(--vmin-em) * 0.33);
+    font-size: calc(var(--vmin-em) * 1.1);
+}
+
+/* Footer styles */
+
+.report-footer{
+    padding-top: calc(var(--vmin-em) * 2);
+    padding-bottom: calc(var(--vmin-em) * 2);
+}

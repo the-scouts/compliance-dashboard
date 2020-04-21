@@ -1,0 +1,6 @@
+
+.nav-logo img{
+    width: calc(var(--vmin-em) * 2);
+    height: auto;
+    margin: calc(var(--vmin-em) * 1);
+}
