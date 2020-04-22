@@ -1,7 +1,9 @@
 import dash_html_components as html
 import pandas as pd
 from page_components.navbar import Navbar, Navbar2
-from app import app
+
+# Type hints:
+from dash import Dash
 
 
 def compliance_component(head: str, desc: str, aim, target, actual, compliant: bool, colour: str):
@@ -29,13 +31,14 @@ def create_compliance_components():
 
 
 class DashbordGenerator:
-    def __init__(self):
+    def __init__(self, app):
         self.report_name: str = ""
         self.data_date: str = ""
         self.report_location: str = ""
         self.num_adults: int = 0
         self.num_roles: int = 0
         self.component_list: list = []
+        self.app: Dash = app
 
         self.compliance_components: list = create_compliance_components()
 
@@ -48,7 +51,7 @@ class DashbordGenerator:
         self.num_adults = num_adults
         self.num_roles = num_roles
 
-    def generate_dashboard(self):
+    def generate_dashboard(self, app: Dash):
         if not (self.report_name and self.data_date and self.report_location and self.num_adults and self.num_roles):
             raise AttributeError("Make sure all values are set before calling generate(). Have you called set_info and set_people?")
 
@@ -77,6 +80,6 @@ class DashbordGenerator:
 
     def get_dashboard(self):
         return html.Div([
-            Navbar(),
-            self.generate_dashboard()
+            Navbar(self.app),
+            self.generate_dashboard(self.app)
         ], className="reports-page")

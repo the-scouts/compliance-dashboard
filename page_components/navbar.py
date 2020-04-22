@@ -1,11 +1,14 @@
 import dash_bootstrap_components as dbc
 import dash_html_components as html
 import dash_core_components as dcc
-from app import app
 
-def Navbar():
+# Type hints@
+from dash import Dash
+
+
+def Navbar(app: Dash):
     return dbc.NavbarSimple(
-        children=[
+        [
             dbc.NavItem(dbc.NavLink("New dashboard", href="/new")),
             dbc.NavItem(dbc.NavLink("View dashboard", href="/report")),
         ],
@@ -15,8 +18,8 @@ def Navbar():
     )
 
 
-def Navbar2():
-    return html.Nav([
+def Navbar2(app: Dash):
+    return dbc.Nav([
         html.Div([
             html.Div([
                 html.Img(src=app.get_asset_url("logo-purple.png"), className="nav-brand-img"),

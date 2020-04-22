@@ -1,13 +1,12 @@
-import dash
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
 import plotly.graph_objects as go
 
-
 from page_components.navbar import Navbar
 
-nav = Navbar()
+# Type hints:
+from dash import Dash
 
 
 body = dbc.Container(
@@ -75,14 +74,12 @@ body = dbc.Container(
 )
 
 
-def Homepage():
+def Homepage(app: Dash):
     return html.Div([
-        nav,
+        Navbar(app),
         body
     ])
 
-
-app = dash.Dash(__name__,external_stylesheets = [dbc.themes.UNITED])
 
 # app.layout = Homepage()
 '''
@@ -93,6 +90,3 @@ app = dash.Dash(__name__,external_stylesheets = [dbc.themes.UNITED])
 def update_text_output(button_selction):
     return "what the fuck is going on"
 '''
-
-if __name__ == "__main__":
-    app.run_server()
