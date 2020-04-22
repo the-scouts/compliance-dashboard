@@ -3,12 +3,25 @@ channels:
   - conda-forge
   - defaults
 dependencies:
+  - python=3.7
+
+  # dash packages
   - dash
   - dash-bootstrap-components
+
+  # general packages
   - numpy
   - pandas
+
+  # needed for dash-auth
+  - requests
+
+  # development
+  - black
+  - pytest
+
+  # pip packages
   - pip
-  - python=3.7
   - pip:
     - dash-auth
 prefix: C:\Users\Adam.16KDR.000\.conda\envs\compliance-dashboard
