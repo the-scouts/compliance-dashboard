@@ -21,15 +21,18 @@ def Navbar(app: Dash):
 def Navbar2(app: Dash):
     return dbc.Nav([
         html.Div([
-            html.Div([
-                html.Img(src=app.get_asset_url("logo-purple.png"), className="nav-brand-img"),
-                dcc.Link("Compliance: The Basics", className="nav-brand")
-            ], className="nav-brand-div"),
+            dcc.Link([
+                html.Div([
+                    html.Img(src=app.get_asset_url("logo-purple.png"), className="nav-brand-img"),
+                    html.Span("Compliance: The Basics", className="nav-brand-text")
+                ], className="nav-brand-div"),
+            ], href="/home", className="nav-brand-link"),
+
 
             html.Div([
                 html.Ul([
-                    dcc.Link('Full View   ', href='/dash-vanguard-report/full-view'),
-                    dcc.Link('Full View   ', href='/dash-vanguard-report/full-view')
+                    dcc.Link("New dashboard", href="/new"),
+                    dcc.Link("View dashboard", href="/report")
                 ], className="links-list")
             ], className="links")
 
