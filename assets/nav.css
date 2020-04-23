@@ -1,6 +1,48 @@
+.navigation{
+    font-size: calc(var(--vmin-em) * 1);
+    position: sticky;
+    top: 0;
+    z-index: 1001;
+    background-color: #ffb4e5;
+}
 
-.nav-logo img{
+.nav-container{
+    width: 70vw;
+    margin: calc(var(--vmin-em) * 0.6) auto calc(var(--vmin-em) * 0.4);
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.nav-brand{
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+.nav-brand img{
     width: calc(var(--vmin-em) * 2);
     height: auto;
-    margin: calc(var(--vmin-em) * 1);
+    margin-right: calc(var(--vmin-em) * 1);
+}
+
+.nav-brand span{
+    font-weight: 900; /* Black */
+    color: black;
+    text-decoration: none;
+}
+
+.nav-links{
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 0;
+    list-style: none;
+    padding: calc(var(--vmin-em) / 3) 0;
+}
+
+.nav-links a{
+    display: block;
+    padding: 0 calc(var(--vmin-em) * 0.5);
+    color: black;
 }
