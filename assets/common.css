@@ -23,3 +23,30 @@
 .azure-blue{
     background-color: #006EE0;
 }
+
+/* General element styles */
+*{
+    line-height: normal;
+    font-weight: 400; /* Regular */
+    -webkit-box-sizing:border-box;
+    box-sizing:border-box
+}
+
+body{
+    font-family: "Nunito Sans", /* Our custom font import order*/
+    "Ubuntu", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; /* Bootstrap sans-serif font imports */
+    margin: 0;
+}
+
+div{
+    line-height: 0;
+}
+
+h3{
+    font-weight: 900; /* Black */
+    color: #7413DC;
+    font-size: calc(var(--vmin-em) * 2.5);
+    margin: 0;
+    line-height: 1;
+    letter-spacing: normal;
+}
