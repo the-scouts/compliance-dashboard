@@ -2,13 +2,11 @@ import dash
 # import dash_auth
 import dash_core_components as dcc
 import dash_html_components as html
-import dash_bootstrap_components as dbc
 
 import index
 
 app: dash.Dash = dash.Dash(
     __name__,
-    external_stylesheets=[dbc.themes.UNITED]
 )
 # app.config.suppress_callback_exceptions=True
 # server = app.server

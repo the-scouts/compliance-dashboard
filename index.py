@@ -17,10 +17,3 @@ def run_app(app: Dash):
             return dg.get_dashboard()
         else:
             return Homepage(app)
-
-    dg.set_people(1, 2)
-
-
-
-
-
