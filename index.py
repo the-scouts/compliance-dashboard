@@ -1,10 +1,10 @@
 from dash.dependencies import Input, Output
 from dash import Dash
 
-from pages import dashboard_generator
-from pages import homepage
-from pages import nopage
-from pages import new_dashboard
+from components import dashboard_generator
+from components import homepage
+from components import nopage
+from components import new_dashboard
 
 
 class DGIndex:

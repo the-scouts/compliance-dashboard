@@ -5,7 +5,6 @@ import dash_html_components as html
 import flask
 
 import index
-from pages import new_dashboard
 
 app: dash.Dash = dash.Dash(
     __name__,
