@@ -1,21 +1,35 @@
 from dash.dependencies import Input, Output
 from dash import Dash
 
-from pages.dashboard_generator import DashbordGenerator
-from pages.homepage import Homepage
-from pages.nopage import noPage
+from pages import dashboard_generator
+from pages import homepage
+from pages import nopage
+from pages import new_dashboard
 
 
-def run_app(app: Dash):
-    dg = DashbordGenerator(app)
-    dg.set_info("County Team", "October 2019", "Central Yorkshire")
-    dg.set_people(305, 389)
+class DGIndex:
+    def __init__(self, app: Dash):
+        self.app = app
+        self.dg = None
 
-    @app.callback(Output('page-content', 'children'), [Input('url', 'pathname')])
-    def display_page(pathname):
-        if pathname == '/report':
-            return dg.get_dashboard()
-        elif pathname == '/home':
-            return Homepage(app)
-        else:
-            return noPage(app)
+        self._setup_callbacks()
+
+    def run_app(self, app: Dash):
+        self.dg = dashboard_generator.DashbordGenerator(app)
+
+        self.dg.set_info("County Team", "October 2019", "Central Yorkshire")
+        self.dg.set_people(305, 389)
+
+    def _setup_callbacks(self):
+        new_dashboard.setup_callbacks(self.app)
+
+        @self.app.callback(Output('page-content', 'children'), [Input('url', 'pathname')])
+        def display_page(pathname):
+            if pathname == '/report':
+                return self.dg.get_dashboard()
+            elif pathname == '/home':
+                return homepage.Homepage(self.app)
+            elif pathname == '/new':
+                return new_dashboard.new_dashboard(self.app)
+            else:
+                return nopage.noPage(self.app)
