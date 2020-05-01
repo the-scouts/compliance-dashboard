@@ -52,8 +52,10 @@ def new_dashboard(app: dash.Dash):
 
 def _new_dashboard():
     return html.Div([
-        _upload_component("compliance-report"),
-        _upload_component("training-report"),
+        html.Div([
+            _upload_component("compliance-report"),
+            _upload_component("training-report"),
+        ], className="upload-group"),
         dcc.Input(
             id="input-title",
             type="text",
@@ -62,21 +64,18 @@ def _new_dashboard():
         dcc.Input(
             id="input-disclosures",
             type="number",
-            placeholder=98.50,
+            value=98.50,
             min=0, max=100, step=0.01,
         )
     ], className="new-dashboard-container")
 
 
 def _upload_component(upload_id: str):
-    return html.Div([
-        dcc.Upload(
-            html.Div([
-                'Drag and Drop or ',
-                html.A('Select Files')
-            ]),
-            id=f'upload-{upload_id}',
-            className="new-upload"
-        ),
-        html.Div(id=f'output-upload-{upload_id}'),
-    ])
+    return dcc.Upload(
+        html.Div([
+            'Drag and Drop or ',
+            html.A('Select Files')
+        ], className="upload-text"),
+        id=f'upload-{upload_id}',
+        className="new-upload"
+    )

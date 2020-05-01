@@ -1,12 +1,9 @@
-.new-upload{
-    width: 50%;
-    height: 60px;
-    line-height: 60px;
-    border-width: 1px;
-    border-style: dashed;
-    border-radius: 5px;
-    text-align: center;
-    margin: 10px;
+.new-dashboard-page{
+    height: 100vh;
+    display: flex;
+    flex-flow: column nowrap;
+    align-content: flex-start;
+    overflow: hidden;
 }
 
 .new-dashboard-container{
@@ -25,10 +22,18 @@
     padding-right: calc(90vmin * 1.5 * 0.021); /* L/R padding is 4.2% of width */
 }
 
-.new-dashboard-page{
-    height: 100vh;
+.upload-group{
     display: flex;
-    flex-flow: column nowrap;
-    align-content: flex-start;
-    overflow: hidden;
+    flex-flow: row nowrap;
+    justify-content: space-evenly;
+}
+
+.new-upload{
+    width: calc(var(--vmin-em) * 15);
+    height: calc(var(--vmin-em) * 4);
+    border-width: 1px;
+    border-style: dashed;
+    border-radius: 5px;
+    text-align: center;
+    margin: 10px;
 }

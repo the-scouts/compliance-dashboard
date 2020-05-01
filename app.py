@@ -61,7 +61,7 @@ if __name__ == '__main__':
     </html>
     """
 
-    app.layout = serve_content()
+    app.layout = serve_content
     idx = index.DGIndex(app)
     idx.run_app(app)
     app.run_server(debug=True)
