@@ -2,13 +2,14 @@ import dash
 # import dash_auth
 import dash_core_components as dcc
 import dash_html_components as html
+import flask
 
 import index
+from pages import new_dashboard
 
 app: dash.Dash = dash.Dash(
     __name__,
 )
-# app.config.suppress_callback_exceptions=True
 # server = app.server
 
 # # Keep this out of source code repository - save in a file or a database
@@ -37,7 +38,7 @@ app.index_string = """
 </html>
 """
 
-app.layout = html.Div([
+normal_layout = html.Div([
     # represents the URL bar, doesn't render anything
     dcc.Location(id='url', refresh=False),
 
@@ -45,6 +46,25 @@ app.layout = html.Div([
     html.Div(id='page-content')
 ])
 
+validation_layout = html.Div([
+    dcc.Location(id='url', refresh=False),
+    html.Div(id='page-content'),
+    dcc.Upload(id='upload-compliance-report'),
+    html.Div(id='output-upload-compliance-report'),
+    dcc.Upload(id='upload-training-report'),
+    html.Div(id='output-upload-training-report'),
+])
+
+
+def serve_content():
+    if flask.has_request_context():
+        return normal_layout
+    else:
+        return validation_layout
+
+
 if __name__ == '__main__':
-    index.run_app(app)
+    app.layout = serve_content()
+    idx = index.DGIndex(app)
+    idx.run_app(app)
     app.run_server(debug=True)

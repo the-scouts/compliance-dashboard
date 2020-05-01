@@ -6,8 +6,7 @@ dependencies:
   - python=3.7
 
   # dash packages
-  - dash
-  - dash-bootstrap-components
+  - dash=1.10
 
   # general packages
   - numpy
