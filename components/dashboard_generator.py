@@ -1,6 +1,6 @@
 import dash_html_components as html
 import pandas as pd
-from page_components.navbar import Navbar
+from components.navbar import Navbar
 
 # Type hints:
 from dash import Dash

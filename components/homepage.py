@@ -1,7 +1,7 @@
 import dash_core_components as dcc
 import dash_html_components as html
 
-from page_components.navbar import Navbar
+from components.navbar import Navbar
 
 # Type hints:
 from dash import Dash
