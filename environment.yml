@@ -7,7 +7,6 @@ dependencies:
 
   # dash packages
   - dash
-  - dash-bootstrap-components
 
   # general packages
   - numpy
