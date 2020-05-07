@@ -109,9 +109,14 @@ span.component-description{
     flex-grow: 2;
 }
 
-.component-stats{
+.component-stats-1{
     flex-grow: 3;
 }
+
+.component-stats-3{
+    flex-grow: 1;
+}
+
 .component-stats > div{
     display: flex;
     justify-content: center;

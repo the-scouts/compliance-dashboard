@@ -1,33 +1,35 @@
 import dash_html_components as html
 import pandas as pd
 from components.navbar import Navbar
+from urllib import parse
+import base64
 
 # Type hints:
 from dash import Dash
 
 
-def compliance_component(head: str, desc: str, aim, target, actual, compliant: bool, colour: str):
-    status = "compliant" if compliant else "non-compliant"
+def compliance_component(head: str, desc: str, colour: str, component_properties: list):
+    component_stats = []
+    num_props = len(component_properties)
+    class_name = "component-stats component-stats-1" if num_props <= 2 else "component-stats component-stats-3"
+    for target_props in component_properties:
+        target_props["status"] = "compliant" if target_props["compliant"] else "non-compliant"
+        component_stats.append(html.Div([
+            html.Div([
+                html.Span(f"Aim: {target_props['aim']} (T {target_props['target']})", className="component-aim-text")
+            ], className="component-aim"),
+            html.Div([
+                html.Span(f"Actual: {target_props['actual']}", className="component-actual-text")
+            ], className=f"component-actual {target_props['status']}")
+        ], className=class_name))
 
     return html.Div([
         html.Div([
             html.H4(f"{head}", className="component-header"),
             html.Span(f"{desc}", className="component-description"),
         ], className="component-summary"),
-        html.Div([
-            html.Div([
-                html.Span(f"Aim: {aim} (T {target})", className="component-aim-text")
-            ], className="component-aim"),
-            html.Div([
-                html.Span(f"Actual: {actual}", className="component-actual-text")
-            ], className=f"component-actual {status}")
-        ], className="component-stats")
+        *component_stats
     ], className=f"component-info {colour}")
-
-
-def create_compliance_components():
-    components: pd.DataFrame = pd.read_csv("./data/compliance-components.csv")
-    return [compliance_component(c['Subheads'], c['Descriptions'],  0, 10, 5, True, c['Colours']) for c in components.to_dict('records')]
 
 
 class DashbordGenerator:
@@ -38,20 +40,63 @@ class DashbordGenerator:
         self.num_adults: int = 0
         self.num_roles: int = 0
         self.component_list: list = []
+        self.compliance_components: list = []
         self.app: Dash = app
 
-        self.compliance_components: list = create_compliance_components()
-
-    def set_info(self, report_name: str, data_date: str, report_location: str):
+    def _set_info(self, report_name: str, data_date: str, report_location: str):
         self.report_name = report_name
         self.data_date = data_date
         self.report_location = report_location
 
-    def set_people(self, num_adults: int, num_roles: int):
+    def _set_people(self, num_adults: int, num_roles: int):
         self.num_adults = num_adults
         self.num_roles = num_roles
 
-    def generate_dashboard(self, app: Dash):
+    def _set_components(self, **kwargs):
+        target_value = kwargs.pop("TV")
+        components_properties = {k[:2]: [] for k in kwargs.keys()}
+        for k, v in kwargs.items():
+            key = k[:2]
+            if k == "AA":
+                aim = "100%"  # Render with percent sign
+                target = "98.5%"
+                actual = f"{v:.1f}%"
+                compliant = v >= 98.5  # Custom target value for disclosures
+
+            elif k == "WB":
+                target = target_value / 2  # Custom target value for woodbadges
+                aim = 0
+                actual = v
+                compliant = v <= target
+            else:
+                target = target_value
+                aim = 0
+                actual = v
+                compliant = v <= target_value
+
+            components_properties[key].append(dict(
+                aim=aim,
+                target=target,
+                actual=actual,
+                compliant=compliant
+            ))
+
+        components = pd.read_csv("./data/compliance-components.csv", index_col=0)
+        props_series = pd.Series(components_properties)
+        components = components.merge(props_series.rename("Properties"), left_index=True, right_index=True)
+        self.compliance_components = [compliance_component(c['Subheads'], c['Descriptions'],  c['Colours'], c["Properties"]) for c in components.to_dict('records')]
+
+    def _setup_dashboard(self, params):
+        data_date = params.pop("DD")
+        total_adults = params.pop("TA")
+        total_roles = params.pop("TR")
+        report_title = params.pop("RT")
+        report_location = params.pop("RL")
+        self._set_info(report_name=report_title, data_date=data_date, report_location=report_location)
+        self._set_people(num_adults=total_adults, num_roles=total_roles)
+        self._set_components(**params)
+
+    def _generate_dashboard(self, app: Dash):
         if not (self.report_name and self.data_date and self.report_location and self.num_adults and self.num_roles):
             raise AttributeError("Make sure all values are set before calling generate(). Have you called set_info and set_people?")
 
@@ -78,8 +123,18 @@ class DashbordGenerator:
             ], className="report-footer"),
         ], className="report-container")
 
-    def get_dashboard(self):
+    def get_dashboard(self, query):
+        param_string = parse.parse_qsl(query)[0][1].encode()
+        param_dict = dict(parse.parse_qsl(base64.urlsafe_b64decode(param_string).decode("UTF8")))
+        for k, v in param_dict.items():
+            try:
+                param_dict[k] = int(v) if "." not in v else float(v)
+            except ValueError:
+                param_dict[k] = v if v else None
+
+        self._setup_dashboard(param_dict)
+
         return html.Div([
             Navbar(self.app),
-            self.generate_dashboard(self.app)
+            self._generate_dashboard(self.app)
         ], className="reports-page")

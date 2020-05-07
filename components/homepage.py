@@ -26,14 +26,3 @@ def Homepage(app: Dash):
         Navbar(app),
         body
     ], className="home-page")
-
-
-# app.layout = Homepage()
-'''
-@app.callback(
-    Output(component_id='my-div',component_property='children'),
-    [Input(component_id='my-dropdown',component_property='children')]
-)
-def update_text_output(button_selction):
-    return "what the fuck is going on"
-'''

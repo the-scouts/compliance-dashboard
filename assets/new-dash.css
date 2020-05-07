@@ -29,11 +29,47 @@
 }
 
 .new-upload{
-    width: calc(var(--vmin-em) * 15);
-    height: calc(var(--vmin-em) * 4);
-    border-width: 1px;
+    width: calc(var(--vmin-em) * 25);
+    height: calc(var(--vmin-em) * 20);
+    margin: calc(var(--vmin-em) * 2 / 3);
+    border-width: calc(var(--vmin-em) / 6);
     border-style: dashed;
-    border-radius: 5px;
+    border-radius: calc(var(--vmin-em));
+    display: flex;
+    flex-flow: column nowrap;
+    justify-content: center;
     text-align: center;
-    margin: 10px;
+    background-color: rgba(241, 241, 241, 0.8);
+}
+
+.upload-text{
+    margin: calc(var(--vmin-em) * 5);
+    font-size: calc(var(--vmin-em) * 1);
+    line-height: 1;
+}
+
+.upload-text span{
+    display: inline-block;
+    font-weight: 900;
+    color: #7413DC;
+    margin-bottom: calc(var(--vmin-em) * 1);
+    font-size: calc(var(--vmin-em) * 1.2);
+}
+
+.new-dashboard-container input{
+    height: calc(var(--vmin-em) * 2);
+    width: calc(var(--vmin-em) * 40);
+    margin: calc(var(--vmin-em) * 1);
+    padding: calc(var(--vmin-em) * 0.5);
+    font-size: calc(var(--vmin-em) * 1);
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type="number"] {
+    width: calc(var(--vmin-em) * 10);
+    -moz-appearance: textfield;
 }

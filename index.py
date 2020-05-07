@@ -1,10 +1,11 @@
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 from dash import Dash
 
 from components import dashboard_generator
 from components import homepage
 from components import nopage
 from components import new_dashboard
+from components import navbar
 
 
 class DGIndex:
@@ -17,16 +18,15 @@ class DGIndex:
     def run_app(self, app: Dash):
         self.dg = dashboard_generator.DashbordGenerator(app)
 
-        self.dg.set_info("County Team", "October 2019", "Central Yorkshire")
-        self.dg.set_people(305, 389)
-
     def _setup_callbacks(self):
-        new_dashboard.setup_callbacks(self.app)
+        app = self.app
+        new_dashboard.setup_callbacks(app)
+        navbar.setup_callbacks(app)
 
-        @self.app.callback(Output('page-content', 'children'), [Input('url', 'pathname')])
-        def display_page(pathname):
+        @app.callback(Output('page-content', 'children'), [Input('url', 'pathname')], [State('url', 'search')])
+        def display_page(pathname, query):
             if pathname == '/report':
-                return self.dg.get_dashboard()
+                return self.dg.get_dashboard(query)
             elif pathname == '/home':
                 return homepage.Homepage(self.app)
             elif pathname == '/new':
