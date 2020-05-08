@@ -1,7 +1,9 @@
 from pathlib import Path
+import os
 import flask
 import dash
-# import dash_auth
+
+import dash_auth
 import dash_core_components as dcc
 import dash_html_components as html
 import visdcc
@@ -27,10 +29,12 @@ if __name__ == '__main__':
     server = app.server
 
     # # Keep this out of source code repository - save in a file or a database
-    # VALID_USERNAME_PASSWORD_PAIRS = {
-    #     "comp": "92point8",
-    # }
-    # auth = dash_auth.BasicAuth(app, VALID_USERNAME_PASSWORD_PAIRS)
+    user = os.environ["user"]
+    password = os.environ["pass"]
+    VALID_USERNAME_PASSWORD_PAIRS = {
+        user: password,
+    }
+    auth = dash_auth.BasicAuth(app, VALID_USERNAME_PASSWORD_PAIRS)
 
     app.index_string = """ 
     <!DOCTYPE html>
@@ -88,10 +92,10 @@ if __name__ == '__main__':
         html.Div(id='page-content')
     ])
 
-    @server.route('/download/<path:path>')
-    def serve_report(path):
-        """Serve a file from the upload directory."""
-        return flask.send_from_directory(DOWNLOAD_DIR, path, as_attachment=True)
+    # @server.route('/download/<path:path>')
+    # def serve_report(path):
+    #     """Serve a file from the upload directory."""
+    #     return flask.send_from_directory(DOWNLOAD_DIR, path, as_attachment=True)
 
     idx = index.DGIndex(app)
     idx.run_app(app)
