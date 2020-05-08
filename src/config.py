@@ -5,5 +5,5 @@ PROJECT_ROOT = Path("./").resolve().absolute()
 DOWNLOAD_DIR = PROJECT_ROOT / "download"
 
 env = os.environ
-user = env["user"]
-password = env["pass"]
+user = env.get("user")
+password = env.get("pass")

@@ -1,6 +1,6 @@
 import dash_html_components as html
 import pandas as pd
-from components.navbar import Navbar
+from src.components.navbar import Navbar
 from urllib import parse
 import base64
 

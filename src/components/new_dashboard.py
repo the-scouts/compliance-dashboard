@@ -12,8 +12,8 @@ import dash_core_components as dcc
 import dash_html_components as html
 from xlrd import XLRDError
 
-from components.navbar import Navbar
-from config import PROJECT_ROOT
+from src.components.navbar import Navbar
+from src.config import PROJECT_ROOT
 
 UPLOAD_PATH = PROJECT_ROOT / "data"
 
