@@ -3,7 +3,7 @@ import dash_html_components as html
 import dash_core_components as dcc
 from dash.dependencies import Output, Input, State
 
-# Type hints@
+# Type hints
 from dash import Dash
 
 
@@ -58,5 +58,3 @@ def setup_callbacks(app: Dash):
     #     if data:
     #         print(_, data, data2)
     #     return ["dash.no_update", ""]
-
-

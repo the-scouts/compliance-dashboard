@@ -1,17 +1,14 @@
-from pathlib import Path
-import os
 import flask
 import dash
 
 import dash_auth
 import dash_core_components as dcc
 import dash_html_components as html
-import visdcc
+# import visdcc
 
 import index
+from config import user, password
 
-PROJECT_ROOT = Path("./").resolve().absolute()
-DOWNLOAD_DIR = PROJECT_ROOT / "download"
 
 normal_layout = html.Div([
     # represents the URL bar, doesn't render anything
@@ -28,9 +25,6 @@ if __name__ == '__main__':
     app: dash.Dash = dash.Dash(__name__)
     server = app.server
 
-    # # Keep this out of source code repository - save in a file or a database
-    user = os.environ["user"]
-    password = os.environ["pass"]
     VALID_USERNAME_PASSWORD_PAIRS = {
         user: password,
     }

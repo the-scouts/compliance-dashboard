@@ -13,7 +13,7 @@ import dash_html_components as html
 from xlrd import XLRDError
 
 from components.navbar import Navbar
-from app import PROJECT_ROOT
+from config import PROJECT_ROOT
 
 UPLOAD_PATH = PROJECT_ROOT / "data"
 
@@ -28,7 +28,7 @@ def setup_callbacks(app: dash.Dash):
 
 def create_upload_callback(app: dash.Dash, upload_id: str, guid):
     @app.callback([Output(f'upload-{upload_id}', 'children'),
-                   Output(f'contents-{upload_id}', 'data'),],
+                   Output(f'contents-{upload_id}', 'data'), ],
                   [Input(f'upload-{upload_id}', 'filename')],
                   [State(f'upload-{upload_id}', 'contents')])
     def update_output(filename, contents):
@@ -44,7 +44,7 @@ def create_button_callback(app: dash.Dash, ):
     @app.callback([Output(f'button', "children"),
                    Output('url', 'pathname'),
                    Output('url', 'search'),
-                   Output("report-query", "data"),],
+                   Output("report-query", "data"), ],
                   [Input("button", "n_clicks")],
                   [State(f'contents-compliance-report', 'data'),
                    State(f'contents-training-report', 'data'),
