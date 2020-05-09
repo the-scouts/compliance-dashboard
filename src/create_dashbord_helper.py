@@ -1,7 +1,6 @@
 import base64
 import io
 import math
-import uuid
 from urllib import parse
 
 import pandas as pd

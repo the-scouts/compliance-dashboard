@@ -127,7 +127,8 @@ def _new_dashboard():
             placeholder=98.5,
             min=0, max=100, step=0.1,
         ),
-        html.Button("Create Report", id="button")
+        html.Button("Create Report", id="button"),
+        html.Div(hidden=True, id="new-dashboard-warnings")
     ], className="page-container app-container new-dash")
 
 
