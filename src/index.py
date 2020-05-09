@@ -46,7 +46,7 @@ class DGIndex:
         def display_app_page(pathname, query):
             if pathname == '/report':
                 return self.dg.get_dashboard(query)
-            elif pathname == '/home':
+            elif pathname in ['/', '/home'] or pathname is None:
                 return homepage.Homepage(app)
             elif pathname == '/new':
                 return new_dashboard.new_dashboard(app)

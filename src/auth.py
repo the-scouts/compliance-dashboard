@@ -70,20 +70,24 @@ def setup_auth_callbacks(app: dash.Dash):
          Output("login-alert", "children")],
         [Input("login-button", "n_clicks")],
         [State("login-username", "value"),
-         State("login-password", "value")],
+         State("login-password", "value"),
+         State("url", "pathname"), ],
         prevent_initial_call=True)
-    def login_auth(_, username, pw):
+    def login_auth(_, username, pw, pathname):
         """
         check credentials
         if correct, authenticate the session
         otherwise, authenticate the session and send user to login
         """
+        if pathname == "/login":
+            pathname = "/home"
+
         credentials = (username, pw)
         if credentials.count(None) == len(credentials):
             return dash.no_update, dash.no_update
 
         if authenticate_user(credentials):
             session["authed"] = True
-            return "/home", ""
+            return pathname, ""
         session["authed"] = False
         return dash.no_update, html.Div("Incorrect credentials.", className="auth-alert")

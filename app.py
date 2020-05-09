@@ -1,17 +1,18 @@
 import flask
-import dash
-from uuid import uuid4
+import logging
 
+import dash
 import dash_core_components as dcc
 import dash_html_components as html
 # import visdcc
 
 import src.index as index
+from src.config import secret_key
 
 app: dash.Dash = dash.Dash(__name__)
 server = app.server
 
-server.secret_key = uuid4().bytes
+server.secret_key = secret_key
 
 app.index_string = """ 
 <!DOCTYPE html>
@@ -81,3 +82,8 @@ idx.run_app(app)
 if __name__ == '__main__':
     print("Running server")
     app.run_server(debug=True)
+else:
+    gunicorn_logger = logging.getLogger('gunicorn.error')
+    server.logger.handlers = gunicorn_logger.handlers
+    server.logger.setLevel(gunicorn_logger.level)
+    server.logger.info("Running server on gunicorn")
