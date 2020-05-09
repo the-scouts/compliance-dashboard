@@ -1,10 +1,10 @@
 /* Font and variable setup */
-@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;700;900&display=swap');
 
 :root{
     --vmax-em: 0.95542vmax; /* 1em == 15pt in vmax */
     --vmin-em: 1.55709vmin; /* 1em == 15pt in vmin */
-    --vmin-px: calc(var(--vmin-px));
+    --vmin-px: calc(var(--vmin-em) / 15);
 }
 
 /* Utility styles */
@@ -27,7 +27,6 @@
 /* General element styles */
 *{
     line-height: normal;
-    font-weight: 400; /* Regular */
     -webkit-box-sizing:border-box;
     box-sizing:border-box;
 }
@@ -36,6 +35,7 @@ body{
     font-family: "Nunito Sans", /* Our custom font import order*/
     "Ubuntu", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; /* Bootstrap sans-serif font imports */
     margin: 0;
+    font-weight: 400; /* Regular */
 }
 
 div{

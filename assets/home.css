@@ -1,4 +1,15 @@
-.home span{
-    line-height: 1.5;
-    margin:  calc(var(--vmin-em) * 1);
+#entry-point{
+    display: inline-block;
+    box-sizing: border-box;
+    border: calc(var(--vmin-px)) solid #006EE0;
+    border-radius: calc(var(--vmin-px) * 5);
+    padding: calc(var(--vmin-em) * 1);
+    margin-top: calc(var(--vmin-em) * 1);
+    margin-bottom: calc(var(--vmin-em) * 1.5);
+    font-weight: 700;
+    font-size: calc(var(--vmin-em) * 1.25);
+}
+
+#entry-point a{
+    color: #23A950;
 }

@@ -11,13 +11,12 @@ body = html.Div([
     html.H3("Compliance: The Basics"),
     html.H4("Compliance dashboard generator"),
     html.Br(),
-    html.Span([
-        "Please click ",
-        dcc.Link("here", href="/new"),
-        " to start a new report."
-    ]),
+    html.Span(dcc.Link("Create a new report", href="/new"), id="entry-point"),
     html.Br(),
-    html.Span("If you have any questions, please contact the developer, Adam Turner")
+    html.Em([
+        "If you have any questions, please ",
+        html.A("contact the developer", href="https://forms.gle/5iiLrRdMh1skJfeL9", target="_blank"),
+        ", Adam Turner"])
 ], className="page-container static-container vertical-center home")
 
 
