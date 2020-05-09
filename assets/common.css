@@ -51,6 +51,13 @@ h3{
     letter-spacing: normal;
 }
 
+h4 {
+    font-size: calc(var(--vmin-em) * 1.75);
+    line-height: 1;
+    margin-bottom: calc(var(--vmin-em) * 0.8);
+    margin-top: calc(var(--vmin-em) * 0.8);
+}
+
 /* General Page styles */
 .page{
     height: 100vh;

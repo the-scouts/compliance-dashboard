@@ -50,8 +50,19 @@ def create_button_callback(app: dash.Dash, ):
                    State(f'contents-training-report', 'data'),
                    State(f'input-title', 'value'),
                    State(f'input-location', 'value'),
-                   State(f'input-disclosures', 'value'), ])
-    def update_button(_, c_contents, t_contents, title, location, valid_disclosures):
+                   State(f'input-disclosures', 'value'), ],
+                  prevent_initial_call=True)
+    def update_button(clicked, c_contents, t_contents, title, location, valid_disclosures):
+        ctx = dash.callback_context
+        num_outputs = len(ctx.outputs_list)
+
+        # Short circuit if empty
+        if not clicked:
+            return [dash.no_update] * len(ctx.outputs_list)
+
+        def update_button_text(new_text: str):
+            return [new_text] + [dash.no_update] * (num_outputs - 1)
+
         inputs = [
             (c_contents, "Compliance Assistant Report"),
             (t_contents, "Training Assistant Report"),
@@ -68,7 +79,7 @@ def create_button_callback(app: dash.Dash, ):
                 blank_inputs.append(input_tuple[1])
 
         if input_missing:
-            return [f"Inputs missing: {'; '.join(blank_inputs)}", dash.no_update, dash.no_update, dash.no_update]
+            return update_button_text(f"Inputs missing: {'; '.join(blank_inputs)}")
 
         workbooks = {}
         for t in [(c_contents, "Compliance"), (t_contents, "Training")]:
@@ -83,7 +94,7 @@ def create_button_callback(app: dash.Dash, ):
                         sheets[sheet] = pd.read_excel(xls, sheet_name=sheet, header=None)
             except XLRDError as e:
                 print(e)
-                return [f'There was an error processing the {t[1]} Assistant Report file.', dash.no_update, dash.no_update, dash.no_update]
+                return update_button_text(f'There was an error processing the {t[1]} Assistant Report file.')
             workbooks[t[1]] = sheets
 
         values = _parse_reports(workbooks["Compliance"], workbooks["Training"])
@@ -204,11 +215,11 @@ def _new_dashboard():
         dcc.Input(
             id="input-disclosures",
             type="number",
-            placeholder=98.50,
+            placeholder=98.5,
             min=0, max=100, step=0.1,
         ),
-        html.Button("Button", id="button")
-    ], className="page-container app-container")
+        html.Button("Create Report", id="button")
+    ], className="page-container app-container new-dash")
 
 
 def _upload_component(upload_id: str, file_desc: str):

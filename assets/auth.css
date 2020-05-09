@@ -31,10 +31,3 @@
     margin-bottom: calc(var(--vmin-em) * 1);
     padding: calc(var(--vmin-em) * 0.5) calc(var(--vmin-em) / 1.2);
 }
-
-h4 {
-    font-size: calc(var(--vmin-em) * 1.75);
-    line-height: 1.35;
-    margin-bottom: calc(var(--vmin-em) * 0.8);
-    margin-top: calc(var(--vmin-em) * 0.8);
-}

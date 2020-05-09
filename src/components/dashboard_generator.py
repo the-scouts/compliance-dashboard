@@ -1,4 +1,5 @@
 import dash_html_components as html
+import dash_core_components as dcc
 import pandas as pd
 from src.components.navbar import Navbar
 from urllib import parse
@@ -124,6 +125,19 @@ class DashbordGenerator:
         ], className="page-container vertical-center app-container")
 
     def get_dashboard(self, query):
+        if not query:
+            return html.Div([
+                Navbar(self.app),
+                html.Div([
+                    html.H3("Report not found"),
+                    html.H4([
+                        "Please ",
+                        dcc.Link("generate a new report", href="/new"),
+                        " or check your URL"
+                    ])
+                ], className="page-container vertical-center static-container")
+            ], className="page")
+
         param_string = parse.parse_qsl(query)[0][1].encode()
         param_dict = dict(parse.parse_qsl(base64.urlsafe_b64decode(param_string).decode("UTF8")))
         for k, v in param_dict.items():

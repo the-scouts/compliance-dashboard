@@ -32,7 +32,7 @@
     font-size: calc(var(--vmin-em) * 1.2);
 }
 
-.new-dashboard-container input{
+.new-dash input{
     height: calc(var(--vmin-em) * 2);
     width: calc(var(--vmin-em) * 40);
     margin: calc(var(--vmin-em) * 1);
