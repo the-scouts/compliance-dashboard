@@ -43,8 +43,6 @@ app.validation_layout = html.Div([
     dcc.Location(id='url', refresh=False),
     dcc.Store(id="report-query", storage_type="local"),
     # dcc.Store(id="page-store", storage_type="local"),
-    dcc.Store(id="contents-compliance-report"),
-    dcc.Store(id="contents-training-report"),
     dcc.Upload(id='upload-compliance-report'),
     dcc.Upload(id='upload-training-report'),
     dcc.Input(id="input-title"),
@@ -66,8 +64,6 @@ app.layout = html.Div([
     # dcc.Interval(id='interval-component', interval=2000),
     dcc.Store(id="report-query", storage_type="local"),
     # dcc.Store(id="page-store", storage_type="local", data="0"),
-    dcc.Store(id="contents-compliance-report"),
-    dcc.Store(id="contents-training-report"),
     # visdcc.Run_js(id='javascript'),
 
     # content will be rendered in this element
