@@ -15,7 +15,7 @@ UPLOAD_PATH = PROJECT_ROOT / "data"
 
 def create_query_string(c_contents, t_contents, title, location, valid_disclosures) -> dict:
     def output_value(value: str, button: bool = False, path: bool = False):
-        if button != path:
+        if not button != path:
             raise ValueError("Exactly one of button or path must be set!")
 
         if path:
