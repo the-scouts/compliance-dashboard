@@ -5,17 +5,14 @@ trigger:
 - master
 
 variables:
-  # Azure Resource Manager connection created during pipeline creation
-  azureServiceConnectionId: 'e1311594-9942-4eca-9f44-194d885314f0'
-  
   # Web app name
-  webAppName: 'compliance-the-basics'
+  webAppName: $(projectName)
 
   # Agent VM image name
   vmImageName: 'ubuntu-latest'
 
   # Environment name
-  environmentName: 'compliance-the-basics'
+  environmentName: $(projectName)
 
   # Project root folder. Point to the folder containing manage.py file.
   projectRoot: $(System.DefaultWorkingDirectory)
@@ -78,8 +75,12 @@ stages:
             displayName: 'Use Python version'
 
           - task: AzureWebApp@1
+            env:
+              AZURE_CONNECTION_ID: $(azureServiceConnectionId)
             displayName: 'Deploy Azure Web App : compliance-the-basics'
             inputs:
-              azureSubscription: $(azureServiceConnectionId)
+              azureSubscription: AZURE_CONNECTION_ID
               appName: $(webAppName)
               package: $(Pipeline.Workspace)/drop/$(Build.BuildId).zip
+
+              startUpCommand: 'gunicorn --bind=0.0.0.0 --timeout=600 --workers=4 app:server'
