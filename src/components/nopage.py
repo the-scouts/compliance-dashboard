@@ -11,13 +11,13 @@ def noPage(app: Dash):
         # CC Header
         Navbar(app),
         page_not_found()
-    ], className="no-page")
+    ], className="page")
 
 
 def page_not_found():
     return html.Div([
         html.H3("The page you requested does't exist."),
         dcc.Link([
-            html.H4("Click here to go to the start page")
+            html.H4("Return to the start page")
         ], href="/home")
-    ], className="err-container")
+    ], className="page-container vertical-center static-container")

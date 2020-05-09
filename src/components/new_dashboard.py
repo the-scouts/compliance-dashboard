@@ -182,7 +182,7 @@ def new_dashboard(app: dash.Dash):
     return html.Div([
         Navbar(app),
         _new_dashboard(),
-    ], className="new-dashboard-page")
+    ], className="page")
 
 
 def _new_dashboard():
@@ -208,7 +208,7 @@ def _new_dashboard():
             min=0, max=100, step=0.1,
         ),
         html.Button("Button", id="button")
-    ], className="new-dashboard-container")
+    ], className="page-container app-container")
 
 
 def _upload_component(upload_id: str, file_desc: str):

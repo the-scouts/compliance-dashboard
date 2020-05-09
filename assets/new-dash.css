@@ -1,27 +1,3 @@
-.new-dashboard-page{
-    height: 100vh;
-    display: flex;
-    flex-flow: column nowrap;
-    align-content: flex-start;
-    overflow: hidden;
-}
-
-.new-dashboard-container{
-    position: relative;
-
-    flex-grow: 1;
-    display: flex;
-    flex-flow: column nowrap;
-    /*justify-content: center;*/
-
-    height: 90vmin;
-    width: calc(90vmin * 1.5); /* width = 1.5* height */
-    margin: auto;
-    background-color: white;
-    padding-left: calc(90vmin * 1.5 * 0.021); /* L/R padding is 4.2% of width */
-    padding-right: calc(90vmin * 1.5 * 0.021); /* L/R padding is 4.2% of width */
-}
-
 .upload-group{
     display: flex;
     flex-flow: row nowrap;

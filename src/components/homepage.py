@@ -18,11 +18,11 @@ body = html.Div([
     ]),
     html.Br(),
     html.Span("If you have any questions, please contact the developer, Adam Turner")
-], className="home")
+], className="page-container static-container vertical-center home")
 
 
 def Homepage(app: Dash):
     return html.Div([
         Navbar(app),
         body
-    ], className="home-page")
+    ], className="page")

@@ -121,7 +121,7 @@ class DashbordGenerator:
             html.Div([
                 html.H3(f"{self.num_adults} Adults - {self.num_roles} Roles", className="people-stats")
             ], className="report-footer"),
-        ], className="report-container")
+        ], className="page-container vertical-center app-container")
 
     def get_dashboard(self, query):
         param_string = parse.parse_qsl(query)[0][1].encode()
@@ -137,4 +137,4 @@ class DashbordGenerator:
         return html.Div([
             Navbar(self.app),
             self._generate_dashboard(self.app)
-        ], className="reports-page")
+        ], className="page")
