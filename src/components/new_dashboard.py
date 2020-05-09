@@ -1,4 +1,5 @@
 import base64
+import flask
 
 import dash
 from dash.dependencies import Input, Output, State
@@ -6,27 +7,27 @@ import dash_core_components as dcc
 import dash_html_components as html
 
 from src.components.navbar import Navbar
-from src.config import PROJECT_ROOT, session_id
+from src.config import PROJECT_ROOT
 from src import create_dashbord_helper
 
 UPLOAD_PATH = PROJECT_ROOT / "data"
 
 
 def setup_callbacks(app: dash.Dash):
-
-    create_upload_callback(app, "compliance-report", session_id)
-    create_upload_callback(app, "training-report", session_id)
+    create_upload_callback(app, "compliance-report")
+    create_upload_callback(app, "training-report")
     create_button_callback(app, "button", "compliance-report", "training-report")
 
 
-def create_upload_callback(app: dash.Dash, upload_id: str, guid):
+def create_upload_callback(app: dash.Dash, upload_id: str):
     @app.callback([Output(f"upload-{upload_id}", "children")],
                   [Input(f"upload-{upload_id}", "filename")],
                   [State(f"upload-{upload_id}", "contents")])
     def update_output(filename, contents):
+        uid = flask.session.get("uid")
         if filename is not None:
             data = contents.split(",")[1]
-            with open(UPLOAD_PATH / f"{guid}-{filename}", "wb") as fp:
+            with open(UPLOAD_PATH / f"{uid}-{filename}", "wb") as fp:
                 fp.write(base64.b64decode(data))
             return [_upload_text(children=html.H5(filename))]
         return dash.no_update

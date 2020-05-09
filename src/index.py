@@ -1,5 +1,5 @@
-from dash.dependencies import Input, Output, State
 import dash
+from dash.dependencies import Input, Output, State
 
 from src.components import dashboard_generator
 from src.components import homepage
@@ -29,7 +29,8 @@ class DGIndex:
     def _routing_callback(self):
         app = self.app
 
-        @app.callback(Output('page-content', 'children'),
+        @app.callback([Output('page-content', 'children'),
+                       Output('old-url', 'data'), ],
                       [Input('url', 'pathname'),
                        Input('login-url', 'pathname')],
                       [State('url', 'search')])
@@ -38,9 +39,9 @@ class DGIndex:
             # Find the latest pathname to change
             pathname = dash.callback_context.triggered[0].get("value")
             if pathname == '/login':
-                return auth.login_layout()
+                return auth.login_layout(), dash.no_update
             else:
-                return display_app_page(pathname, query)
+                return display_app_page(pathname, query), pathname
 
         @auth.validate_login_session
         def display_app_page(pathname, query):

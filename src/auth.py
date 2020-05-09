@@ -1,4 +1,6 @@
+import uuid
 from functools import wraps
+
 from flask import session
 import dash
 import dash_core_components as dcc
@@ -39,8 +41,8 @@ def validate_login_session(f):
             return f(*args, **kwargs)
         return html.Div(
             html.Div([
-                html.H2("401 - Unauthorised"),
-                html.H4(dcc.Link("Please log in", href="/login"))
+                html.H3(dcc.Link("Please Log In", href="/login")),
+                html.H4("login not found (unauthorised)"),
             ], className="page-container vertical-center static-container"),
             className="page"
         )
@@ -71,7 +73,7 @@ def setup_auth_callbacks(app: dash.Dash):
         [Input("login-button", "n_clicks")],
         [State("login-username", "value"),
          State("login-password", "value"),
-         State("url", "pathname"), ],
+         State("old-url", "data"), ],
         prevent_initial_call=True)
     def login_auth(_, username, pw, pathname):
         """
@@ -88,6 +90,7 @@ def setup_auth_callbacks(app: dash.Dash):
 
         if authenticate_user(credentials):
             session["authed"] = True
+            session["uid"] = uuid.uuid4().hex[:8]
             return pathname, ""
         session["authed"] = False
         return dash.no_update, html.Div("Incorrect credentials.", className="auth-alert")
