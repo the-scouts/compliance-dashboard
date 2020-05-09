@@ -75,11 +75,9 @@ stages:
             displayName: 'Use Python version'
 
           - task: AzureWebApp@1
-            env:
-              AZURE_CONNECTION_ID: $(azureServiceConnectionId)
             displayName: 'Deploy Azure Web App : compliance-the-basics'
             inputs:
-              azureSubscription: AZURE_CONNECTION_ID
+              azureSubscription:  $(azureServiceConnectionId)
               appName: $(webAppName)
               package: $(Pipeline.Workspace)/drop/$(Build.BuildId).zip
 
