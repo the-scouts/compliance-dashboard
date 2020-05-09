@@ -75,10 +75,10 @@ stages:
             displayName: 'Use Python version'
 
           - task: AzureWebApp@1
-            displayName: 'Deploy Azure Web App : compliance-the-basics'
+            displayName: 'Deploy Azure Web App - {{ projectName }}'
             inputs:
               azureSubscription:  $(azureServiceConnectionId)
               appName: $(webAppName)
+              appType: 'webAppLinux'
               package: $(Pipeline.Workspace)/drop/$(Build.BuildId).zip
-
               startUpCommand: 'gunicorn --bind=0.0.0.0 --timeout=600 --workers=4 app:server'
