@@ -40,8 +40,8 @@ def validate_login_session(f):
             return f(*args, **kwargs)
         return html.Div(
             html.Div([
-                html.H2("401 - Unauthorised", className="card-title"),
-                html.H4(dcc.Link("Login", href="/login"))
+                html.H2("401 - Unauthorised"),
+                html.H4(dcc.Link("Please log in", href="/login"))
             ], className="page-container vertical-center static-container"),
             className="page"
         )
@@ -53,13 +53,13 @@ def validate_login_session(f):
 def login_layout():
     return html.Div(
         html.Div([
-            html.H4("Login", className="card-title"),
-            dbc.Input(id="login-username", placeholder="Username", type="text"),
-            dbc.Input(id="login-password", placeholder="Password", type="password"),
-            dbc.Button("Submit", id="login-button", color="success", block=True),
+            html.H4("Login"),
+            dcc.Input(id="login-username", placeholder="Username", type="text"),
+            dcc.Input(id="login-password", placeholder="Password", type="password"),
+            html.Button("Submit", id="login-button", className="green"),
             html.Br(),
             html.Div(id="login-alert")
-        ], className="page-container vertical-center static-container"),
+        ], className="page-container vertical-center static-container auth"),
         className="page"
     )
 
@@ -80,8 +80,11 @@ def setup_auth_callbacks(app: dash.Dash):
         otherwise, authenticate the session and send user to login
         """
         credentials = (username, pw)
+        if credentials.count(None) == len(credentials):
+            return dash.no_update, dash.no_update
+
         if authenticate_user(credentials):
             session["authed"] = True
             return "/home", ""
         session["authed"] = False
-        return dash.no_update, dbc.Alert("Incorrect credentials.", color="danger", dismissable=True)
+        return dash.no_update, html.Div("Incorrect credentials.", className="auth-alert")

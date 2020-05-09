@@ -8,7 +8,7 @@
     width: calc(var(--vmin-em) * 25);
     height: calc(var(--vmin-em) * 20);
     margin: calc(var(--vmin-em) * 2 / 3);
-    border-width: calc(var(--vmin-em) / 6);
+    border-width: calc(var(--vmin-px) * 2);
     border-style: dashed;
     border-radius: calc(var(--vmin-em));
     display: flex;

@@ -4,6 +4,7 @@
 :root{
     --vmax-em: 0.95542vmax; /* 1em == 15pt in vmax */
     --vmin-em: 1.55709vmin; /* 1em == 15pt in vmin */
+    --vmin-px: calc(var(--vmin-px));
 }
 
 /* Utility styles */
@@ -28,7 +29,7 @@
     line-height: normal;
     font-weight: 400; /* Regular */
     -webkit-box-sizing:border-box;
-    box-sizing:border-box
+    box-sizing:border-box;
 }
 
 body{

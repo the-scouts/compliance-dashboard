@@ -1,0 +1,40 @@
+.auth input{
+    height: calc(var(--vmin-em) * 2.55);
+    padding: calc(var(--vmin-em) * 0.4) calc(var(--vmin-em) * 2 / 3);
+    background-color: #fff;
+    border: calc(var(--vmin-em) / 15) solid #D1D1D1;
+    border-radius: calc(var(--vmin-em) / 3);
+    box-shadow: none;
+    box-sizing: border-box;
+}
+
+.auth button{
+    margin-top: calc(var(--vmin-em) * 1);
+    color: white;
+    font-weight: 900;
+    height: calc(var(--vmin-em) * 2.55);
+    line-height: 1;
+    font-size: calc(var(--vmin-em) * 0.7);
+    padding: 0 calc(var(--vmin-em) * 2);
+    border: none;
+    border-radius: calc(var(--vmin-em) / 6);
+}
+
+.auth-alert{
+    font-weight: 900;
+    color: #721c24;
+    background-color: #f8d7da;
+    line-height: calc(var(--vmin-em) * 2);
+    border: none;
+    border-radius: calc(var(--vmin-em) / 6);
+    margin-top: calc(var(--vmin-em) * 1);
+    margin-bottom: calc(var(--vmin-em) * 1);
+    padding: calc(var(--vmin-em) * 0.5) calc(var(--vmin-em) / 1.2);
+}
+
+h4 {
+    font-size: calc(var(--vmin-em) * 1.75);
+    line-height: 1.35;
+    margin-bottom: calc(var(--vmin-em) * 0.8);
+    margin-top: calc(var(--vmin-em) * 0.8);
+}
