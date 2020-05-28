@@ -19,9 +19,7 @@ dependencies:
   - black
   - pytest
 
-  # pip packages
-  - pip
-  - pip:
-    - dash-auth
-prefix: C:\Users\Adam.16KDR.000\.conda\envs\compliance-dashboard
-
+#  # pip packages
+#  - pip
+#  - pip:
+#    -
