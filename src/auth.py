@@ -65,7 +65,7 @@ def login_layout():
     )
 
 
-def setup_auth_callbacks(app: dash.Dash):
+def setup_callbacks(app: dash.Dash):
     # authenticate
     @app.callback(
         [Output("login-url", "pathname"),
@@ -90,7 +90,6 @@ def setup_auth_callbacks(app: dash.Dash):
 
         if authenticate_user(credentials):
             session["authed"] = True
-            session["uid"] = uuid.uuid4().hex[:8]
             return pathname, ""
         session["authed"] = False
         return dash.no_update, html.Div("Incorrect credentials.", className="auth-alert")
