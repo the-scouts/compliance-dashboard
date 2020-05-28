@@ -146,6 +146,8 @@ span.component-description{
     margin-top: -100px;
     background: #FFF;
     z-index: 500;
+    -webkit-box-shadow:  0 0 0 9999px rgba(0, 0, 0, 0.5);
+    box-shadow:  0 0 0 9999px rgba(0, 0, 0, 0.5);
 }
 
 .popup p{
@@ -162,9 +164,4 @@ span.component-description{
 
 .popup hr{
     margin-top: 0;
-}
-
-#download-popup{
-    -webkit-box-shadow:  0 0 0 9999px rgba(0, 0, 0, 0.5);
-    box-shadow:  0 0 0 9999px rgba(0, 0, 0, 0.5);
 }

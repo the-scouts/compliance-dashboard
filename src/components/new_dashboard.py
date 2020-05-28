@@ -1,7 +1,7 @@
 import time
 
 import dash
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output, State, ClientsideFunction
 import dash_core_components as dcc
 import dash_html_components as html
 
@@ -13,6 +13,26 @@ def setup_callbacks(app: dash.Dash):
     create_upload_callback(app, "compliance-report")
     create_upload_callback(app, "training-report")
     create_button_callback(app, "button", "compliance-report", "training-report")
+
+    # Show a waiting spinner on clicking the button
+    app.clientside_callback(
+        ClientsideFunction(
+            namespace="compliance",
+            function_name="new_dashboard_spinner"
+        ),
+        Output("button", "data-popup"),
+        [Input("button", "n_clicks")]
+    )
+
+    # If components are missing, re-hide the spinner
+    app.clientside_callback(
+        ClientsideFunction(
+            namespace="compliance",
+            function_name="new_dashboard_spinner_hide"
+        ),
+        Output("button", "data-popup-hide"),
+        [Input("button", "children")]
+    )
 
 
 def create_upload_callback(app: dash.Dash, upload_id: str):
@@ -140,4 +160,5 @@ def new_dashboard(app: dash.Dash):
     return html.Div([
         Navbar(app),
         _new_dashboard(),
+        html.Div(id="new-dash-popup", className="popup", style={"display": "none"}),
     ], className="page")
