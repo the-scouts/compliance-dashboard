@@ -4,7 +4,7 @@ import flask
 import dash
 from dash.dependencies import Input, Output, State
 
-from src.components import dashboard_generator
+from src.components import render_dashboard
 from src.components import homepage
 from src.components import nopage
 from src.components import new_dashboard
@@ -20,7 +20,7 @@ class DGIndex:
         self._setup_callbacks()
 
     def init_app(self, app: dash.Dash):
-        self.dg = dashboard_generator.DashbordGenerator(app)
+        self.dg = render_dashboard.DashbordGenerator(app)
 
     def _setup_callbacks(self):
         app = self.app
