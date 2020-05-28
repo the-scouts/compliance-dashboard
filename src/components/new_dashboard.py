@@ -112,6 +112,7 @@ def _new_dashboard():
         dcc.Input(
             id="input-title",
             type="text",
+            persistence=True,
             placeholder="County Team",
         ),
         html.Span("Dashboard Report Location (e.g. Nottingham, North East, Scotland)"),
@@ -119,12 +120,14 @@ def _new_dashboard():
         dcc.Input(
             id="input-location",
             type="text",
+            persistence=True,
             placeholder="Central Yorkshire",
         ),
         html.Span("Percentage of valid disclosures (from Compass Disclosure Management Report)"),
         dcc.Input(
             id="input-disclosures",
             type="number",
+            persistence=True,
             placeholder=98.5,
             min=0, max=100, step=0.1,
         ),
