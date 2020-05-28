@@ -102,7 +102,7 @@ function newDashboardSpinner(input) {
     if (input == null) {
         return window.dash_clientside.no_update;
     }
-    showPopup("new-dash-popup", "Generating report, please wait...<br>(this may be a short while)")
+    showPopup("new-dash-popup", "Generating report, please wait...<br/>(this may be a short while)")
     return window.dash_clientside.no_update;
 }
 

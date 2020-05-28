@@ -14,7 +14,7 @@ import src.config as config
 from typing import Dict, Any
 
 
-def create_query_string(c_contents, t_contents, title, location, valid_disclosures, app) -> dict:
+def create_query_string(c_contents, t_contents, title, valid_disclosures, app) -> dict:
     def output_value(value: str, button: bool = False, path: bool = False):
         if not button != path:
             raise ValueError("Exactly one of button or path must be set!")
@@ -45,6 +45,41 @@ def create_query_string(c_contents, t_contents, title, location, valid_disclosur
             workbooks[k] = sheets
         return workbooks
 
+    def read_appointments_report(data_props: dict) -> dict:
+        large_sheets = read_workbooks(data_props, included_worksheets=["Appointments"])  # Excluded = "Report"
+        large_sheets_flat = {ws: v for wb_dict in large_sheets.values() for ws, v in wb_dict.items()}
+        
+        appts = large_sheets_flat["Appointments"]
+        locs: pd.DataFrame = appts.rename(columns=appts.iloc[0]).iloc[8:, [11, 12, 13]].drop_duplicates().fillna("")
+
+        location_name = ""  # UK/National has a blank logo
+        has_children = False
+        multi_idx = pd.MultiIndex.from_frame(locs).levels
+        for i, level in enumerate(multi_idx):
+            if len(level) != 1:
+                break
+            location_name = level[0]
+            has_children = len(multi_idx[i+1]) > 0 if i+1 < len(multi_idx) else None
+        
+        return dict(location_name=location_name, has_children=has_children)
+
+    def store_trend_data_get_report_location(data_props: dict, params_dict: dict):
+        appt_report_props = {}
+        try:
+            appt_report_props = read_appointments_report(data_props)
+        except ValueError:
+            pass  # nowhere to return the error to
+        
+        report_location = appt_report_props.get("location_name", "")
+        includes_descendants = appt_report_props.get("has_children", False)
+        
+        # TODO Store the values somehow
+
+        params_dict["RL"] = report_location
+        return params_dict
+        
+        
+    print("Reading main sheets")
     data_properties = {"Compliance": c_contents, "Training": t_contents}
     try:
         parsed_data = read_workbooks(data_properties, included_worksheets=["Report Notes", "Summary", "Notes",])
@@ -66,20 +101,31 @@ def create_query_string(c_contents, t_contents, title, location, valid_disclosur
         'total_roles': "TR",
         'target_value': "TV",
         'data_date': "DD",
+        'RT': 'RT',
+        'RL': 'RL',
     }
     disclosure_values = {"appropriate_adults": valid_disclosures}
     parsed_values = _parse_reports(parsed_data["Compliance"], parsed_data["Training"])
     parsed_values["data_date"] = parsed_values["data_date"]["compliance"]
     del parsed_values["assistant_versions"]
-    meta_values = {"RT": title, "RL": location}
+    meta_values = {"RT": title}
+
+    print("Calling store trend data")
+    parsed_values = store_trend_data_get_report_location(data_properties, parsed_values)
 
     values = {**disclosure_values, **parsed_values, **meta_values}
     parameters = {key_map[k]: v for k, v in values.items()}
+
+    
+    # process_large = threading.Thread(target=store_trend_data_get_report_location, args=[data_properties, parameters])
+    # process_large.start()
+
     encoded = base64.urlsafe_b64encode(parse.urlencode(parameters).encode()).decode("UTF8")
     return output_value(f"?params={encoded}", path=True)
 
 
 def _parse_reports(compliance_sheets, training_sheets):
+    # TODO support switching of compliance and training sheets
     assistant_versions = {}
     data_date = {}
     # Compliance Report parsing:

@@ -57,10 +57,9 @@ def create_button_callback(app: dash.Dash, button_id: str, compliance_upload_id:
                   [State(f"upload-{compliance_upload_id}", "contents"),
                    State(f"upload-{training_upload_id}", "contents"),
                    State("input-title", "value"),
-                   State("input-location", "value"),
                    State("input-disclosures", "value"), ],
                   prevent_initial_call=True)
-    def update_button(clicked, c_contents, t_contents, title, location, valid_disclosures):
+    def update_button(clicked, c_contents, t_contents, title, valid_disclosures):
         # TODO save input state?
         # TODO accept only CSV/XLS(X)?
 
@@ -80,7 +79,6 @@ def create_button_callback(app: dash.Dash, button_id: str, compliance_upload_id:
             (c_contents, "Compliance Assistant Report"),
             (t_contents, "Training Assistant Report"),
             (title, "Report Title"),
-            (location, "Report Location"),
             (valid_disclosures, "Valid Disclosures"),
         ]
 
@@ -94,7 +92,7 @@ def create_button_callback(app: dash.Dash, button_id: str, compliance_upload_id:
         if input_missing:
             return update_button_text(f"Inputs missing: {'; '.join(blank_inputs)}")
         app.server.logger.info(f"Time before create dashboard helper: {time.time() - start_time}")
-        out = create_dashbord_helper.create_query_string(c_contents, t_contents, title, location, valid_disclosures, app)
+        out = create_dashbord_helper.create_query_string(c_contents, t_contents, title, valid_disclosures, app)
         value = out["value"]
         app.server.logger.info(f"Report time: {time.time() - start_time}")
         if out["type"] == "button":
@@ -133,22 +131,13 @@ def _new_dashboard():
             id="input-title",
             type="text",
             persistence=True,
-            placeholder="County Team",
         ),
-        html.Span("Dashboard Report Location (e.g. Nottingham, North East, Scotland)"),
-        html.Em("Please note that currently the application does not support Nations logo colour schemes"),
-        dcc.Input(
-            id="input-location",
-            type="text",
-            persistence=True,
-            placeholder="Central Yorkshire",
-        ),
-        html.Span("Percentage of valid disclosures (from Compass Disclosure Management Report)"),
+        html.Span("Percentage of valid disclosures from Compass Disclosure Management Report (e.g. 98.5)"),
+        html.Em("Please type only the number and not a percentage sign etc."),
         dcc.Input(
             id="input-disclosures",
             type="number",
             persistence=True,
-            placeholder=98.5,
             min=0, max=100, step=0.1,
         ),
         html.Button("Create Report", id="button"),
