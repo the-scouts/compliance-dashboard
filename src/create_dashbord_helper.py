@@ -11,7 +11,7 @@ import pandas as pd
 
 import src.config as config
 
-from typing import Dict
+from typing import Dict, Any
 
 
 def create_query_string(c_contents, t_contents, title, location, valid_disclosures, app) -> dict:
@@ -24,16 +24,16 @@ def create_query_string(c_contents, t_contents, title, location, valid_disclosur
         else:
             return dict(type="button", value=value)
 
-    def read_workbooks(data_props_dict, excluded_worksheets: list = None) -> Dict[Dict[pd.DataFrame]]:
-        if not excluded_worksheets:
-            excluded_worksheets = []
+    def read_workbooks(data_props_dict, included_worksheets: list = None) -> Dict[Any, Dict[Any, pd.DataFrame]]:
+        if not included_worksheets:
+            raise ValueError(f"There was an internal error. Please contact the developer and retain these files for debugging.")
         workbooks = {}
         for k, data in data_props_dict.items():
             try:
                 sheets = {}
                 data = data.split(",")[1]
                 with pd.ExcelFile(io.BytesIO(base64.b64decode(data)),  engine="openpyxl") as xls:
-                    sheets_to_open = [s for s in xls.sheet_names if s not in excluded_worksheets]
+                    sheets_to_open = [s for s in xls.sheet_names if s in included_worksheets]
                     for sheet in sheets_to_open:
                         sheets[sheet] = xls.parse(sheet_name=sheet, header=None)
             except (exceptions.InvalidFileException, zipfile.BadZipFile) as e:
@@ -46,7 +46,10 @@ def create_query_string(c_contents, t_contents, title, location, valid_disclosur
         return workbooks
 
     data_properties = {"Compliance": c_contents, "Training": t_contents}
-    parsed_data = read_workbooks(data_properties, ["Report", "Appointments", ])
+    try:
+        parsed_data = read_workbooks(data_properties, included_worksheets=["Report Notes", "Summary", "Notes",])
+    except ValueError as er:
+        return er.args[0]
 
     key_map = {
         'appropriate_adults': "AA",
@@ -143,4 +146,4 @@ def parse_data(b64data: str, name):
     s = flask.session.get("s_id")
     now = time.strftime("%H%M%S")[1:-1]
     data = base64.b64decode(b64data.split(",")[1])
-    threading.Thread(target=lambda: config.UPLOAD_DIR.joinpath(f"{s}#{now}-{name}").write_bytes(data))
+    threading.Thread(target=lambda: config.UPLOAD_DIR.joinpath(f"{s}#{now}-{name}").write_bytes(data)).start()
