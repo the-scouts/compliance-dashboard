@@ -122,7 +122,7 @@ class DashbordGenerator:
             html.Div([
                 html.H3(f"{self.num_adults} Adults - {self.num_roles} Roles", className="people-stats")
             ], className="report-footer"),
-        ], className="page-container vertical-center app-container")
+        ], className="page-container vertical-center app-container", id="report-container")
 
     def get_dashboard(self, query):
         if not query:
@@ -149,6 +149,7 @@ class DashbordGenerator:
         self._setup_dashboard(param_dict)
 
         return html.Div([
-            Navbar(self.app),
-            self._generate_dashboard(self.app)
+            Navbar(self.app, download=True),
+            self._generate_dashboard(self.app),
+            html.Div(id="download-popup", className="popup", style={"display": "none"})
         ], className="page")
