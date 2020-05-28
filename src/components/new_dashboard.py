@@ -1,5 +1,4 @@
-import base64
-import flask
+import time
 
 import dash
 from dash.dependencies import Input, Output, State
@@ -7,10 +6,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 
 from src.components.navbar import Navbar
-from src.config import PROJECT_ROOT
 from src import create_dashbord_helper
-
-UPLOAD_PATH = PROJECT_ROOT / "data"
 
 
 def setup_callbacks(app: dash.Dash):
@@ -20,17 +16,16 @@ def setup_callbacks(app: dash.Dash):
 
 
 def create_upload_callback(app: dash.Dash, upload_id: str):
-    @app.callback([Output(f"upload-{upload_id}", "children")],
+    @app.callback(Output(f"upload-{upload_id}", "children"),
                   [Input(f"upload-{upload_id}", "filename")],
                   [State(f"upload-{upload_id}", "contents")])
     def update_output(filename, contents):
-        uid = flask.session.get("uid")
-        if filename is not None:
-            data = contents.split(",")[1]
-            with open(UPLOAD_PATH / f"{uid}-{filename}", "wb") as fp:
-                fp.write(base64.b64decode(data))
-            return [_upload_text(children=html.H5(filename))]
-        return dash.no_update
+        # Return quickly if no file exists
+        if filename is None:
+            return dash.no_update
+        else:
+            create_dashbord_helper.parse_data(contents, filename)
+        return _upload_text(children=html.H5(filename))
 
 
 def create_button_callback(app: dash.Dash, button_id: str, compliance_upload_id: str, training_upload_id: str):
@@ -46,6 +41,10 @@ def create_button_callback(app: dash.Dash, button_id: str, compliance_upload_id:
                    State("input-disclosures", "value"), ],
                   prevent_initial_call=True)
     def update_button(clicked, c_contents, t_contents, title, location, valid_disclosures):
+        # TODO save input state?
+        # TODO accept only CSV/XLS(X)?
+
+        start_time = time.time()
         ctx = dash.callback_context
         num_outputs = len(ctx.outputs_list)
 
@@ -74,9 +73,10 @@ def create_button_callback(app: dash.Dash, button_id: str, compliance_upload_id:
 
         if input_missing:
             return update_button_text(f"Inputs missing: {'; '.join(blank_inputs)}")
-
-        out = create_dashbord_helper.create_query_string(c_contents, t_contents, title, location, valid_disclosures)
+        app.server.logger.info(f"Time before create dashboard helper: {time.time() - start_time}")
+        out = create_dashbord_helper.create_query_string(c_contents, t_contents, title, location, valid_disclosures, app)
         value = out["value"]
+        app.server.logger.info(f"Report time: {time.time() - start_time}")
         if out["type"] == "button":
             return update_button_text(out["value"])
         else:
