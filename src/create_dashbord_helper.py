@@ -1,18 +1,20 @@
 import base64
 import io
 import math
+import time
 from urllib import parse
-
+import zipfile
+from openpyxl.utils import exceptions
+import threading
+import flask
 import pandas as pd
 
-from xlrd import XLRDError
+import src.config as config
 
-from src.config import PROJECT_ROOT
-
-UPLOAD_PATH = PROJECT_ROOT / "data"
+from typing import Dict
 
 
-def create_query_string(c_contents, t_contents, title, location, valid_disclosures) -> dict:
+def create_query_string(c_contents, t_contents, title, location, valid_disclosures, app) -> dict:
     def output_value(value: str, button: bool = False, path: bool = False):
         if not button != path:
             raise ValueError("Exactly one of button or path must be set!")
@@ -22,24 +24,30 @@ def create_query_string(c_contents, t_contents, title, location, valid_disclosur
         else:
             return dict(type="button", value=value)
 
-    workbooks = {}
-    for t in [(c_contents, "Compliance"), (t_contents, "Training")]:
-        try:
-            sheets = {}
-            data = t[0].split(",")[1]
-            with pd.ExcelFile(io.BytesIO(base64.b64decode(data))) as xls:
-                sheets_to_open = [s for s in xls.sheet_names if s not in ["Report", "Appointments"]]
-                for sheet in sheets_to_open:
-                    sheets[sheet] = pd.read_excel(xls, sheet_name=sheet, header=None)
-        except XLRDError as e:
-            print(e)
-            return output_value(f'There was an error processing the {t[1]} Assistant Report file.', button=True)
-        workbooks[t[1]] = sheets
+    def read_workbooks(data_props_dict, excluded_worksheets: list = None) -> Dict[Dict[pd.DataFrame]]:
+        if not excluded_worksheets:
+            excluded_worksheets = []
+        workbooks = {}
+        for k, data in data_props_dict.items():
+            try:
+                sheets = {}
+                data = data.split(",")[1]
+                with pd.ExcelFile(io.BytesIO(base64.b64decode(data)),  engine="openpyxl") as xls:
+                    sheets_to_open = [s for s in xls.sheet_names if s not in excluded_worksheets]
+                    for sheet in sheets_to_open:
+                        sheets[sheet] = xls.parse(sheet_name=sheet, header=None)
+            except (exceptions.InvalidFileException, zipfile.BadZipFile) as e:
+                app.server.logger.warning(e)
+                return output_value(f"This file can't be read, please check it is you have saved the {k} Assistant Report as an Excel file.", button=True)
+            except exceptions.ReadOnlyWorkbookException as e:
+                app.server.logger.warning(e)
+                return output_value(f'There was an error processing the {k} Assistant Report file. Please ensure it is closed.', button=True)
+            workbooks[k] = sheets
+        return workbooks
 
-    values = _parse_reports(workbooks["Compliance"], workbooks["Training"])
-    values["data_date"] = values["data_date"]["compliance"]
-    values["appropriate_adults"] = valid_disclosures
-    del values["assistant_versions"]
+    data_properties = {"Compliance": c_contents, "Training": t_contents}
+    parsed_data = read_workbooks(data_properties, ["Report", "Appointments", ])
+
     key_map = {
         'appropriate_adults': "AA",
         'appropriate_roles': "AR",
@@ -56,9 +64,14 @@ def create_query_string(c_contents, t_contents, title, location, valid_disclosur
         'target_value': "TV",
         'data_date': "DD",
     }
+    disclosure_values = {"appropriate_adults": valid_disclosures}
+    parsed_values = _parse_reports(parsed_data["Compliance"], parsed_data["Training"])
+    parsed_values["data_date"] = parsed_values["data_date"]["compliance"]
+    del parsed_values["assistant_versions"]
+    meta_values = {"RT": title, "RL": location}
+
+    values = {**disclosure_values, **parsed_values, **meta_values}
     parameters = {key_map[k]: v for k, v in values.items()}
-    parameters["RT"] = title
-    parameters["RL"] = location
     encoded = base64.urlsafe_b64encode(parse.urlencode(parameters).encode()).decode("UTF8")
     return output_value(f"?params={encoded}", path=True)
 
@@ -124,3 +137,10 @@ def _parse_reports(compliance_sheets, training_sheets):
         assistant_versions=assistant_versions,
         data_date=data_date,
     )
+
+
+def parse_data(b64data: str, name):
+    s = flask.session.get("s_id")
+    now = time.strftime("%H%M%S")[1:-1]
+    data = base64.b64decode(b64data.split(",")[1])
+    threading.Thread(target=lambda: config.UPLOAD_DIR.joinpath(f"{s}#{now}-{name}").write_bytes(data))
