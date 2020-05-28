@@ -38,10 +38,10 @@ def create_query_string(c_contents, t_contents, title, valid_disclosures, app) -
                         sheets[sheet] = xls.parse(sheet_name=sheet, header=None)
             except (exceptions.InvalidFileException, zipfile.BadZipFile) as e:
                 app.server.logger.warning(e)
-                return output_value(f"This file can't be read, please check it is you have saved the {k} Assistant Report as an Excel file.", button=True)
+                raise ValueError(output_value(f"This file can't be read, please check it is you have saved the {k} Assistant Report as an Excel file.", button=True))
             except exceptions.ReadOnlyWorkbookException as e:
                 app.server.logger.warning(e)
-                return output_value(f'There was an error processing the {k} Assistant Report file. Please ensure it is closed.', button=True)
+                raise ValueError(output_value(f'There was an error processing the {k} Assistant Report file. Please ensure it is closed.', button=True))
             workbooks[k] = sheets
         return workbooks
 
@@ -86,6 +86,7 @@ def create_query_string(c_contents, t_contents, title, valid_disclosures, app) -
     except ValueError as er:
         return er.args[0]
 
+    print("Parsing results")
     key_map = {
         'appropriate_adults': "AA",
         'appropriate_roles': "AR",
