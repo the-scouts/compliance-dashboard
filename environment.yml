@@ -11,6 +11,10 @@ dependencies:
   # general packages
   - numpy
   - pandas
+  - pyarrow
+  - lxml
+  - flask
+  - python-dateutil
 
   # needed for dash-auth
   - requests
@@ -22,4 +26,4 @@ dependencies:
 #  # pip packages
 #  - pip
 #  - pip:
-#    -
+#    - flask-caching
