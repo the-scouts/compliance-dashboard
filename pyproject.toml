@@ -16,3 +16,14 @@ exclude = '''
   | setup.py
 )/
 '''
+
+[tool.isort]
+line_length = 180
+skip_glob = '\.eggs/*,\.git/*,\.venv/*,build/*,dist/*'
+no_lines_before = "STDLIB"
+single_line_exclusions = ["dash.dependencies", "typing", "dependencies"]
+# force_single_line = "True" wait until isort 5
+known_dash = ["dash", "dash_core_components", "dash_html_components", "dash.dependencies"]
+known_pandas = ["pandas", "numpy", "pyarrow"]
+known_typing = "typing"
+sections = ["FUTURE","STDLIB","THIRDPARTY","DASH","PANDAS","FIRSTPARTY","LOCALFOLDER","TYPING"]

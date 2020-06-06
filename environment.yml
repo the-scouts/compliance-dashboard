@@ -3,25 +3,24 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python=3.7
+  - python>=3.7
 
   # dash packages
   - dash
+  - flask
 
   # general packages
+  - lxml
   - numpy
   - pandas
   - pyarrow
-  - lxml
-  - flask
   - python-dateutil
-
-  # needed for dash-auth
-  - requests
 
   # development
   - black
   - pytest
+  - toml
+  - isort
 
 #  # pip packages
 #  - pip

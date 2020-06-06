@@ -1,19 +1,23 @@
+from __future__ import annotations
+import base64
 import json
+from urllib import parse
 
-import dash_html_components as html
+import dateutil.parser
+
 import dash_core_components as dcc
+import dash_html_components as html
+
 import pandas as pd
 import pyarrow
-import dateutil.parser
-from src.components.navbar import Navbar
-from urllib import parse
-import base64
 
 import src.config as config
+from src.components.navbar import Navbar
 
-# Type hints:
-from dash import Dash
+from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from dash import Dash
 
 class DashbordGenerator:
     def __init__(self, app):

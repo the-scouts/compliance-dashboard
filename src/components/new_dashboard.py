@@ -1,12 +1,12 @@
 import time
 
 import dash
-from dash.dependencies import Input, Output, State, ClientsideFunction
 import dash_core_components as dcc
 import dash_html_components as html
+from dash.dependencies import ClientsideFunction, Input, Output, State
 
-from src.components.navbar import Navbar
 import src.create_dashbord_helper as create_dashbord_helper
+from src.components.navbar import Navbar
 
 
 def setup_callbacks(app: dash.Dash):

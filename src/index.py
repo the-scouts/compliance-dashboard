@@ -1,16 +1,12 @@
 import uuid
+
 import flask
 
 import dash
 from dash.dependencies import Input, Output, State
 
-from src.components import render_dashboard
-from src.components import homepage
-from src.components import nopage
-from src.components import new_dashboard
-from src.components import navbar
 from src import auth
-import src.config as config
+from src.components import homepage, navbar, new_dashboard, nopage, render_dashboard
 
 
 class DGIndex:

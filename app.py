@@ -1,9 +1,10 @@
 import logging
 
+import flask
+
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-import flask
 
 import src.config as config
 import src.index as index

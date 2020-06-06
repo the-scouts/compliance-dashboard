@@ -1,11 +1,14 @@
+from __future__ import annotations
+
 import dash_core_components as dcc
 import dash_html_components as html
 
 from src.components.navbar import Navbar
 
-# Type hints:
-from dash import Dash
+from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from dash import Dash
 
 body = html.Div([
     html.H3("Compliance: The Basics"),

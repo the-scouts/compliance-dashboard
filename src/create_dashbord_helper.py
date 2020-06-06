@@ -7,7 +7,6 @@ import threading
 import time
 from pathlib import Path
 from urllib import parse
-from typing import TYPE_CHECKING
 
 import pandas as pd
 import pyarrow
@@ -15,6 +14,8 @@ import pyarrow
 import src.config as config
 import src.utility as utility
 import src.xml_excel_reader as xlsx
+
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import dash

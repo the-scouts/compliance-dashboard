@@ -3,8 +3,9 @@ import io
 import re
 import zipfile
 
-import pandas as pd
 from lxml import etree as etree
+
+import pandas as pd
 
 
 class XMLExcelReader:
