@@ -9,6 +9,10 @@
     padding-top: calc(var(--vmin-em) * 2);
 }
 
+.trend-svg{
+    width: calc(var(--vmin-em) * 1.5);
+}
+
 .legend br{
     line-height: 0;
 }
@@ -19,8 +23,14 @@
     margin: calc(var(--vmin-em) * 0.2);
 }
 
-.legend-text:not(:first-child){
-    margin-left: calc(var(--vmin-em) * 2);
+.legend-entry{
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+}
+
+.legend-entry span{
+    margin-left: calc(var(--vmin-em) * 0.5);
 }
 
 .logo{
@@ -64,8 +74,18 @@
     flex-basis: 0;
 }
 
-.component-info span{
-    font-size: calc(var(--vmin-em) * 0.8);;
+.component-info > div > div > span{
+    font-size: calc(var(--vmin-em) * 0.8);
+}
+
+.component-label{
+    font-size: calc(var(--vmin-em) * 0.975);
+    line-height: 0;
+    height: 0;
+    width: 100%;
+    display: inline-block;
+    text-align: center;
+    transform: translateY(calc(var(--vmin-em) * -1));
 }
 
 .component-header{
@@ -94,13 +114,14 @@ span.component-description{
 
 .component-stats > div{
     display: flex;
-    justify-content: center;
-    flex-direction: column;
+    justify-content: space-between;
+    flex-direction: row;
     height: calc(var(--vmin-em) * 2.4);
     padding: calc(var(--vmin-em) * 0.3) calc(var(--vmin-em) * 0.65);
     border-radius: calc(var(--vmin-em) * 0.3);
     margin-left: calc(var(--vmin-em) * -0.3);
     margin-right: calc(var(--vmin-em) * -0.3);
+    align-items: center;
 }
 
 .component-aim{
