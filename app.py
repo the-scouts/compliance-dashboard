@@ -1,18 +1,17 @@
-import flask
 import logging
 
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+import flask
 
-import src.index as index
 import src.config as config
+import src.index as index
 
 app: dash.Dash = dash.Dash(
     __name__,
-    external_scripts=[
-        "https://unpkg.com/html2canvas@1.0.0-rc.5/dist/html2canvas.min.js",
-    ]
+    external_scripts=["https://unpkg.com/html2canvas@1.0.0-rc.5/dist/html2canvas.min.js"],
+    assets_folder=config.ASSETS_DIR
 )
 server = app.server
 
@@ -49,7 +48,6 @@ app.validation_layout = html.Div([
     dcc.Location(id='download-url', refresh=False),
     dcc.Store(id="report-query", storage_type="local"),
     dcc.Store(id="old-url"),
-    # dcc.Store(id="page-store", storage_type="local"),
     dcc.Upload(id='upload-compliance-report'),
     dcc.Upload(id='upload-training-report'),
     dcc.Input(id="input-title"),
@@ -76,14 +74,23 @@ app.layout = html.Div([
     html.Div(id='page-content'),
 ])
 
-# @server.route('/download/<path:path>')
-# def serve_report(path):
-#     """Serve a file from the upload directory."""
-#     return flask.send_from_directory(DOWNLOAD_DIR, path, as_attachment=True)
+
+@server.route('/download/<path:path>')
+def serve_report(path):
+    """Serve a file from the upload directory."""
+    return flask.send_from_directory(config.DOWNLOAD_DIR, path, as_attachment=True)
 
 
+print(f"{id(config.global_path_cache_dict)} app.py")
 app_router = index.DGIndex(app)
 app_router.init_app(app)
+
+# from flask_caching import Cache
+# cache = Cache()
+# cache.init_app(app.server, config={
+#     'CACHE_TYPE': 'simple',
+#     # 'CACHE_DIR': config.DATA_ROOT / "cache"
+# })
 
 if __name__ == '__main__':
     app.run_server(debug=True)
