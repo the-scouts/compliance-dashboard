@@ -15,30 +15,6 @@ import src.config as config
 from dash import Dash
 
 
-def compliance_component(head: str, desc: str, colour: str, component_properties: list):
-    component_stats = []
-    num_props = len(component_properties)
-    class_name = "component-stats component-stats-1" if num_props <= 2 else "component-stats component-stats-3"
-    for target_props in component_properties:
-        target_props["status"] = "compliant" if target_props["compliant"] else "non-compliant"
-        component_stats.append(html.Div([
-            html.Div([
-                html.Span(f"Aim: {target_props['aim']} (T {target_props['target']})", className="component-aim-text")
-            ], className="component-aim"),
-            html.Div([
-                html.Span(f"Actual: {target_props['actual']}", className="component-actual-text")
-            ], className=f"component-actual {target_props['status']}")
-        ], className=class_name))
-
-    return html.Div([
-        html.Div([
-            html.H4(f"{head}", className="component-header"),
-            html.Span(f"{desc}", className="component-description"),
-        ], className="component-summary"),
-        *component_stats
-    ], className=f"component-info {colour}")
-
-
 class DashbordGenerator:
     def __init__(self, app):
         self.report_name: str = ""
@@ -52,7 +28,7 @@ class DashbordGenerator:
 
     def _set_info(self, report_name: str, data_date: str, report_location: str):
         self.report_name = report_name
-        self.data_date = data_date
+        self.data_date = dateutil.parser.parse(data_date).strftime("%B %Y")
         self.report_location = report_location
 
     def _set_people(self, num_adults: int, num_roles: int):
@@ -69,17 +45,7 @@ class DashbordGenerator:
                 target = "98.5%"
                 actual = f"{v:.1f}%"
                 compliant = v >= 98.5  # Custom target value for disclosures
-
-            elif k == "WB":
-                target = target_value / 2  # Custom target value for woodbadges
-                aim = 0
-                actual = v
-                compliant = v <= target
-            else:
-                target = target_value
-                aim = 0
-                actual = v
-                compliant = v <= target_value
+                trend_up = v >= prev_trend_val
 
             components_properties[key].append(dict(
                 aim=aim,
@@ -88,10 +54,38 @@ class DashbordGenerator:
                 compliant=compliant
             ))
 
-        components = pd.read_csv("./data/compliance-components.csv", index_col=0)
+        components = pd.read_csv(config.DATA_ROOT / "compliance-components.csv", index_col=0)
         props_series = pd.Series(components_properties)
         components = components.merge(props_series.rename("Properties"), left_index=True, right_index=True)
-        self.compliance_components = [compliance_component(c['Subheads'], c['Descriptions'],  c['Colours'], c["Properties"]) for c in components.to_dict('records')]
+
+        self.compliance_components = [self._create_component(c['Subheads'], c['Descriptions'], c['Colours'], c["Properties"]) for c in components.to_dict('records')]
+
+    def _create_component(self, head: str, desc: str, colour: str, component_properties: list):
+        component_stats = []
+        num_props = len(component_properties)
+        class_name = "component-stats component-stats-1" if num_props <= 2 else "component-stats component-stats-3"
+        for target_props in component_properties:
+            trend = "happy" if target_props["trend_up"] else "sad"
+            target_props["status"] = "compliant" if target_props["compliant"] else "non-compliant"
+
+            component_stats.append(html.Div([
+                html.Span(target_props["label"], className="component-label") if target_props.get("label") else None,
+                html.Div([
+                    html.Span(f"Aim: {target_props['aim']} (T {target_props['target']})", className="component-aim-text")
+                ], className="component-aim"),
+                html.Div([
+                    html.Span(f"Actual: {target_props['actual']}", className="component-actual-text"),
+                    html.Img(src=self._asset_path(f"{trend}.svg"), className="trend-svg"),
+                ], className=f"component-actual {target_props['status']}")
+            ], className=class_name))
+
+        return html.Div([
+            html.Div([
+                html.H4(f"{head}", className="component-header"),
+                html.Span(f"{desc}", className="component-description"),
+            ], className="component-summary"),
+            *component_stats
+        ], className=f"component-info {colour}")
 
     def _setup_dashboard(self, params):
         data_date = params.pop("DD")
@@ -103,7 +97,7 @@ class DashbordGenerator:
         self._set_people(num_adults=total_adults, num_roles=total_roles)
         self._set_components(**params)
 
-    def _generate_dashboard(self, app: Dash):
+    def _generate_dashboard(self):
         if not (self.report_name and self.data_date and self.report_location and self.num_adults and self.num_roles):
             raise AttributeError("Make sure all values are set before calling generate(). Have you called set_info and set_people?")
 
@@ -130,6 +124,7 @@ class DashbordGenerator:
             ], className="report-footer"),
         ], className="page-container vertical-center app-container", id="report-container")
 
+    # Entry point
     def get_dashboard(self, query):
         if not query:
             return html.Div([
@@ -144,8 +139,8 @@ class DashbordGenerator:
                 ], className="page-container vertical-center static-container")
             ], className="page")
 
-        param_string = parse.parse_qsl(query)[0][1].encode()
-        param_dict = dict(parse.parse_qsl(base64.urlsafe_b64decode(param_string).decode("UTF8")))
+        param_string = parse.parse_qsl(query)[0][1]
+        param_dict = {k: v for k, v in parse.parse_qsl(base64.urlsafe_b64decode(param_string.encode()).decode("UTF8"))}
         for k, v in param_dict.items():
             try:
                 param_dict[k] = int(v) if "." not in v else float(v)
@@ -156,6 +151,6 @@ class DashbordGenerator:
 
         return html.Div([
             Navbar(self.app, download=True),
-            self._generate_dashboard(self.app),
+            self._generate_dashboard(),
             html.Div(id="download-popup", className="popup", style={"display": "none"})
         ], className="page")
