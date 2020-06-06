@@ -42,9 +42,10 @@ def create_upload_callback(app: dash.Dash, upload_id: str):
     def update_output(filename, contents):
         # Return quickly if no file exists
         if filename is None:
-            return dash.no_update
+            raise dash.exceptions.PreventUpdate
         else:
-            create_dashbord_helper.parse_data(contents, filename)
+            report_processor = create_dashbord_helper.ReportProcessor(app, contents)
+            report_processor.parse_data(filename)
         return _upload_text(children=html.H5(filename))
 
 
@@ -59,20 +60,19 @@ def create_button_callback(app: dash.Dash, button_id: str, compliance_upload_id:
                    State("input-title", "value"),
                    State("input-disclosures", "value"), ],
                   prevent_initial_call=True)
-    def update_button(clicked, c_contents, t_contents, title, valid_disclosures):
-        # TODO save input state?
+    def update_button(clicked: int, c_contents: str, t_contents: str, title: str, valid_disclosures: float) -> tuple:
         # TODO accept only CSV/XLS(X)?
+
+        # Short circuit if empty
+        if not clicked:
+            raise dash.exceptions.PreventUpdate
 
         start_time = time.time()
         ctx = dash.callback_context
         num_outputs = len(ctx.outputs_list)
 
-        # Short circuit if empty
-        if not clicked:
-            return [dash.no_update] * len(ctx.outputs_list)
-
-        def update_button_text(new_text: str):
-            return [new_text] + [dash.no_update] * (num_outputs - 1)
+        def update_button_text(new_text: str) -> tuple:
+            return (new_text,) + (dash.no_update, ) * (num_outputs - 1)
 
         # Check all values are present
         inputs = [
@@ -91,15 +91,19 @@ def create_button_callback(app: dash.Dash, button_id: str, compliance_upload_id:
 
         if input_missing:
             return update_button_text(f"Inputs missing: {'; '.join(blank_inputs)}")
-        app.server.logger.info(f"Time before create dashboard helper: {time.time() - start_time}")
-        out = create_dashbord_helper.create_query_string(c_contents, t_contents, title, valid_disclosures, app)
+
+        app.server.logger.info(f"Input validation took: {time.time() - start_time}")
+
+        reports_parser = create_dashbord_helper.ReportsParser(session_id=True)
+        out = reports_parser.create_query_string(title, valid_disclosures)
         value = out["value"]
-        app.server.logger.info(f"Report time: {time.time() - start_time}")
-        if out["type"] == "button":
-            return update_button_text(out["value"])
-        else:
+        app.server.logger.info(f"Report processing took: {time.time() - start_time}")
+
+        if out["type"] == "path":
             query = value
-            return [dash.no_update, "/report", query, query]
+            return dash.no_update, "/report", query, query
+        else:
+            return update_button_text(out["value"])
 
 
 def _upload_text(file_desc: str = None, children: str = None):
