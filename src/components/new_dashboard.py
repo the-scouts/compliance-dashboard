@@ -6,7 +6,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 
 from src.components.navbar import Navbar
-from src import create_dashbord_helper
+import src.create_dashbord_helper as create_dashbord_helper
 
 
 def setup_callbacks(app: dash.Dash):

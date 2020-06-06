@@ -10,6 +10,7 @@ from src.components import nopage
 from src.components import new_dashboard
 from src.components import navbar
 from src import auth
+import src.config as config
 
 
 class DGIndex:
