@@ -39,7 +39,7 @@ def create_upload_callback(app: dash.Dash, upload_id: str):
     @app.callback(Output(f"upload-{upload_id}", "children"),
                   [Input(f"upload-{upload_id}", "filename")],
                   [State(f"upload-{upload_id}", "contents")])
-    def update_output(filename, contents):
+    def update_output(filename: str, contents: str) -> html.Div:
         # Return quickly if no file exists
         if filename is None:
             raise dash.exceptions.PreventUpdate
@@ -106,7 +106,7 @@ def create_button_callback(app: dash.Dash, button_id: str, compliance_upload_id:
             return update_button_text(out["value"])
 
 
-def _upload_text(file_desc: str = None, children: str = None):
+def _upload_text(file_desc: str = None, children: str = None) -> html.Div:
     if children is None:
         children = [
             html.Span(f"Upload a {file_desc}"),
@@ -116,7 +116,7 @@ def _upload_text(file_desc: str = None, children: str = None):
     return html.Div(children, className="upload-text")
 
 
-def _upload_component(upload_id: str, file_desc: str):
+def _upload_component(upload_id: str, file_desc: str) -> dcc.Upload:
     return dcc.Upload(
         _upload_text(file_desc=file_desc),
         id=f"upload-{upload_id}",
@@ -124,7 +124,7 @@ def _upload_component(upload_id: str, file_desc: str):
     )
 
 
-def _new_dashboard():
+def _new_dashboard() -> html.Div:
     return html.Div([
         html.Div([
             _upload_component("compliance-report", "Compliance Assistant Report"),
@@ -149,7 +149,7 @@ def _new_dashboard():
     ], className="page-container app-container new-dash")
 
 
-def new_dashboard(app: dash.Dash):
+def new_dashboard(app: dash.Dash) -> html.Div:
     return html.Div([
         Navbar(app),
         _new_dashboard(),
