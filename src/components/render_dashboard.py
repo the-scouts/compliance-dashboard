@@ -35,12 +35,44 @@ class DashbordGenerator:
         self.num_adults = num_adults
         self.num_roles = num_roles
 
-    def _set_components(self, **kwargs):
+    def _asset_path(self, asset_file: str):
+        return self.app.get_asset_url(asset_file)
+
+    def _set_components(self, trend_keys: dict, **kwargs):
+        try:
+            trends_df = pd.read_feather(config.DOWNLOAD_DIR / "trends.feather").set_index(["Location", "Include Descendents", "Date"])
+        except (FileNotFoundError, pyarrow.lib.ArrowInvalid):
+            trend_dict = {}
+        else:
+            valid_periods = trends_df.xs([trend_keys["location"], trend_keys["children"]])
+            prior_periods = valid_periods.loc[valid_periods.index < pd.to_datetime(trend_keys["date"]), "JSON"]
+            trend_period = prior_periods.iloc[0]  # TODO implement time-based getting instead of first entry before period
+            trend_date = prior_periods.index[0]
+            trend_dict = json.loads(trend_period)
+
         target_value = kwargs.pop("TV")
         components_properties = {k[:2]: [] for k in kwargs.keys()}
-        for k, v in kwargs.items():
-            key = k[:2]
-            if k == "AA":
+        for full_key, v in kwargs.items():
+            prev_trend_val = trend_dict[full_key]
+            key = full_key[:2]
+            label = None
+
+            if key not in ["WB", "GS"]:
+                target = target_value
+            elif key == "WB":
+                target = target_value / 2  # Custom target value for woodbadges
+            elif key == "GS":
+                target = target_value
+                label = f"Module {'/'.join(full_key[2:])}"
+            else:
+                target = target_value
+
+            aim = 0
+            actual = v
+            compliant = v <= target_value
+            trend_up = v <= prev_trend_val
+
+            if key == "AA":
                 aim = "100%"  # Render with percent sign
                 target = "98.5%"
                 actual = f"{v:.1f}%"
@@ -51,7 +83,9 @@ class DashbordGenerator:
                 aim=aim,
                 target=target,
                 actual=actual,
-                compliant=compliant
+                compliant=compliant,
+                trend_up=trend_up,
+                label=label,
             ))
 
         components = pd.read_csv(config.DATA_ROOT / "compliance-components.csv", index_col=0)
@@ -95,7 +129,8 @@ class DashbordGenerator:
         report_location = params.pop("RL")
         self._set_info(report_name=report_title, data_date=data_date, report_location=report_location)
         self._set_people(num_adults=total_adults, num_roles=total_roles)
-        self._set_components(**params)
+        trends_keys = dict(location=report_location, children=True, date=data_date)  # TODO data date needs to be before
+        self._set_components(trends_keys, **params)
 
     def _generate_dashboard(self):
         if not (self.report_name and self.data_date and self.report_location and self.num_adults and self.num_roles):
@@ -105,12 +140,18 @@ class DashbordGenerator:
             html.Div([
                 html.H3(f"The Basics Dashboard – {self.report_name}", className="report-title"),
                 html.Div([
-                    html.Span(f"Data: {self.data_date}", className="legend-text"), html.Br(),
-                    html.Span("Getting better", className="legend-text"), html.Br(),
-                    html.Span("Getting worse", className="legend-text")
+                    html.Span(f"Data: {self.data_date}", className="legend-text"),
+                    html.Div([
+                        html.Img(src=self._asset_path("happy.svg"), className="trend-svg"),
+                        html.Span("Getting better", className="legend-text"),
+                    ], className="legend-entry"),
+                    html.Div([
+                        html.Img(src=self._asset_path("sad.svg"), className="trend-svg"),
+                        html.Span("Getting worse", className="legend-text")
+                    ], className="legend-entry"),
                 ], className="legend"),
                 html.Div([
-                    html.Img(src=app.get_asset_url("scout-logo-purple-stack.png"), className="logo-image"),
+                    html.Img(src=self._asset_path("scout-logo-purple-stack.png"), className="logo-image"),
                     html.Span(f"{self.report_location}", className="logo-text")
                 ], className="logo")
 
