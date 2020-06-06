@@ -1,16 +1,12 @@
-import base64
-import flask
+import time
 
 import dash
-from dash.dependencies import Input, Output, State
 import dash_core_components as dcc
 import dash_html_components as html
+from dash.dependencies import ClientsideFunction, Input, Output, State
 
+import src.create_dashbord_helper as create_dashbord_helper
 from src.components.navbar import Navbar
-from src.config import PROJECT_ROOT
-from src import create_dashbord_helper
-
-UPLOAD_PATH = PROJECT_ROOT / "data"
 
 
 def setup_callbacks(app: dash.Dash):
@@ -18,19 +14,39 @@ def setup_callbacks(app: dash.Dash):
     create_upload_callback(app, "training-report")
     create_button_callback(app, "button", "compliance-report", "training-report")
 
+    # Show a waiting spinner on clicking the button
+    app.clientside_callback(
+        ClientsideFunction(
+            namespace="compliance",
+            function_name="new_dashboard_spinner"
+        ),
+        Output("button", "data-popup"),
+        [Input("button", "n_clicks")]
+    )
+
+    # If components are missing, re-hide the spinner
+    app.clientside_callback(
+        ClientsideFunction(
+            namespace="compliance",
+            function_name="new_dashboard_spinner_hide"
+        ),
+        Output("button", "data-popup-hide"),
+        [Input("button", "children")]
+    )
+
 
 def create_upload_callback(app: dash.Dash, upload_id: str):
-    @app.callback([Output(f"upload-{upload_id}", "children")],
+    @app.callback(Output(f"upload-{upload_id}", "children"),
                   [Input(f"upload-{upload_id}", "filename")],
                   [State(f"upload-{upload_id}", "contents")])
-    def update_output(filename, contents):
-        uid = flask.session.get("uid")
-        if filename is not None:
-            data = contents.split(",")[1]
-            with open(UPLOAD_PATH / f"{uid}-{filename}", "wb") as fp:
-                fp.write(base64.b64decode(data))
-            return [_upload_text(children=html.H5(filename))]
-        return dash.no_update
+    def update_output(filename: str, contents: str) -> html.Div:
+        # Return quickly if no file exists
+        if filename is None:
+            raise dash.exceptions.PreventUpdate
+        else:
+            report_processor = create_dashbord_helper.ReportProcessor(app, contents)
+            report_processor.parse_data(filename)
+        return _upload_text(children=html.H5(filename))
 
 
 def create_button_callback(app: dash.Dash, button_id: str, compliance_upload_id: str, training_upload_id: str):
@@ -42,26 +58,27 @@ def create_button_callback(app: dash.Dash, button_id: str, compliance_upload_id:
                   [State(f"upload-{compliance_upload_id}", "contents"),
                    State(f"upload-{training_upload_id}", "contents"),
                    State("input-title", "value"),
-                   State("input-location", "value"),
                    State("input-disclosures", "value"), ],
                   prevent_initial_call=True)
-    def update_button(clicked, c_contents, t_contents, title, location, valid_disclosures):
-        ctx = dash.callback_context
-        num_outputs = len(ctx.outputs_list)
+    def update_button(clicked: int, c_contents: str, t_contents: str, title: str, valid_disclosures: float) -> tuple:
+        # TODO accept only CSV/XLS(X)?
 
         # Short circuit if empty
         if not clicked:
-            return [dash.no_update] * len(ctx.outputs_list)
+            raise dash.exceptions.PreventUpdate
 
-        def update_button_text(new_text: str):
-            return [new_text] + [dash.no_update] * (num_outputs - 1)
+        start_time = time.time()
+        ctx = dash.callback_context
+        num_outputs = len(ctx.outputs_list)
+
+        def update_button_text(new_text: str) -> tuple:
+            return (new_text,) + (dash.no_update, ) * (num_outputs - 1)
 
         # Check all values are present
         inputs = [
             (c_contents, "Compliance Assistant Report"),
             (t_contents, "Training Assistant Report"),
             (title, "Report Title"),
-            (location, "Report Location"),
             (valid_disclosures, "Valid Disclosures"),
         ]
 
@@ -75,16 +92,21 @@ def create_button_callback(app: dash.Dash, button_id: str, compliance_upload_id:
         if input_missing:
             return update_button_text(f"Inputs missing: {'; '.join(blank_inputs)}")
 
-        out = create_dashbord_helper.create_query_string(c_contents, t_contents, title, location, valid_disclosures)
+        app.server.logger.info(f"Input validation took: {time.time() - start_time}")
+
+        reports_parser = create_dashbord_helper.ReportsParser(session_id=True)
+        out = reports_parser.create_query_string(title, valid_disclosures)
         value = out["value"]
-        if out["type"] == "button":
-            return update_button_text(out["value"])
-        else:
+        app.server.logger.info(f"Report processing took: {time.time() - start_time}")
+
+        if out["type"] == "path":
             query = value
-            return [dash.no_update, "/report", query, query]
+            return dash.no_update, "/report", query, query
+        else:
+            return update_button_text(out["value"])
 
 
-def _upload_text(file_desc: str = None, children: str = None):
+def _upload_text(file_desc: str = None, children: str = None) -> html.Div:
     if children is None:
         children = [
             html.Span(f"Upload a {file_desc}"),
@@ -94,7 +116,7 @@ def _upload_text(file_desc: str = None, children: str = None):
     return html.Div(children, className="upload-text")
 
 
-def _upload_component(upload_id: str, file_desc: str):
+def _upload_component(upload_id: str, file_desc: str) -> dcc.Upload:
     return dcc.Upload(
         _upload_text(file_desc=file_desc),
         id=f"upload-{upload_id}",
@@ -102,7 +124,7 @@ def _upload_component(upload_id: str, file_desc: str):
     )
 
 
-def _new_dashboard():
+def _new_dashboard() -> html.Div:
     return html.Div([
         html.Div([
             _upload_component("compliance-report", "Compliance Assistant Report"),
@@ -112,20 +134,14 @@ def _new_dashboard():
         dcc.Input(
             id="input-title",
             type="text",
-            placeholder="County Team",
+            persistence=True,
         ),
-        html.Span("Dashboard Report Location (e.g. Nottingham, North East, Scotland)"),
-        html.Em("Please note that currently the application does not support Nations logo colour schemes"),
-        dcc.Input(
-            id="input-location",
-            type="text",
-            placeholder="Central Yorkshire",
-        ),
-        html.Span("Percentage of valid disclosures (from Compass Disclosure Management Report)"),
+        html.Span("Percentage of valid disclosures from Compass Disclosure Management Report (e.g. 98.5)"),
+        html.Em("Please type only the number and not a percentage sign etc."),
         dcc.Input(
             id="input-disclosures",
             type="number",
-            placeholder=98.5,
+            persistence=True,
             min=0, max=100, step=0.1,
         ),
         html.Button("Create Report", id="button"),
@@ -133,8 +149,9 @@ def _new_dashboard():
     ], className="page-container app-container new-dash")
 
 
-def new_dashboard(app: dash.Dash):
+def new_dashboard(app: dash.Dash) -> html.Div:
     return html.Div([
         Navbar(app),
         _new_dashboard(),
+        html.Div(id="new-dash-popup", className="popup", style={"display": "none"}),
     ], className="page")

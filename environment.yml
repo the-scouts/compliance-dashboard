@@ -3,25 +3,26 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python=3.7
+  - python>=3.7
 
   # dash packages
   - dash
+  - flask
 
   # general packages
+  - lxml
   - numpy
   - pandas
-
-  # needed for dash-auth
-  - requests
+  - pyarrow
+  - python-dateutil
 
   # development
   - black
   - pytest
+  - toml
+  - isort
 
-  # pip packages
-  - pip
-  - pip:
-    - dash-auth
-prefix: C:\Users\Adam.16KDR.000\.conda\envs\compliance-dashboard
-
+#  # pip packages
+#  - pip
+#  - pip:
+#    - flask-caching

@@ -1,14 +1,13 @@
-import uuid
-from functools import wraps
+import functools
 
 from flask import session
+
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 
-from src.config import user, password
-
+from src.config import password, user
 
 users = {
     user: password
@@ -35,7 +34,7 @@ def validate_login_session(f):
     checks if the user is logged in or not through the session.
     If not, returns an error with link to the login page
     """
-    @wraps(f)
+    @functools.wraps(f)
     def wrapper(*args, **kwargs):
         if session.get("authed"):
             return f(*args, **kwargs)
@@ -65,7 +64,7 @@ def login_layout():
     )
 
 
-def setup_auth_callbacks(app: dash.Dash):
+def setup_callbacks(app: dash.Dash):
     # authenticate
     @app.callback(
         [Output("login-url", "pathname"),
@@ -90,7 +89,6 @@ def setup_auth_callbacks(app: dash.Dash):
 
         if authenticate_user(credentials):
             session["authed"] = True
-            session["uid"] = uuid.uuid4().hex[:8]
             return pathname, ""
         session["authed"] = False
         return dash.no_update, html.Div("Incorrect credentials.", className="auth-alert")
