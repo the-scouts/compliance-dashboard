@@ -86,7 +86,7 @@ def serve_report(path):
 print(f"{id(config.global_path_cache_dict)} app.py")
 app_router = index.DGIndex(app)
 app_router.init_app(app)
-app.enable_dev_tools(debug=True, dev_tools_hot_reload=False)
+
 # from flask_caching import Cache
 # cache = Cache()
 # cache.init_app(app.server, config={
