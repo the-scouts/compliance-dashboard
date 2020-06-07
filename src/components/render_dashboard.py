@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from dash import Dash
 
+
 class DashbordGenerator:
     def __init__(self, app):
         self.report_name: str = ""

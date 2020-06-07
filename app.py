@@ -1,6 +1,8 @@
-import logging
+import pkg_resources
 
+import logging
 import flask
+import pathlib
 
 import dash
 import dash_core_components as dcc
@@ -8,17 +10,18 @@ import dash_html_components as html
 
 import src.config as config
 import src.index as index
+print("\n".join(f"{d.project_name} ({d.version})" for d in pkg_resources.working_set))
 
 app: dash.Dash = dash.Dash(
     __name__,
-    external_scripts=["https://unpkg.com/html2canvas@1.0.0-rc.5/dist/html2canvas.min.js"],
-    assets_folder=config.ASSETS_DIR
+    # external_scripts=["https://unpkg.com/html2canvas@1.0.0-rc.5/dist/html2canvas.min.js"],
+    # assets_folder=config.ASSETS_DIR
 )
 server = app.server
 
 server.secret_key = config.secret_key
 
-app.index_string = """ 
+app.index_string = """
 <!DOCTYPE html>
 <html>
     <head>
@@ -85,6 +88,9 @@ def serve_report(path):
 print(f"{id(config.global_path_cache_dict)} app.py")
 app_router = index.DGIndex(app)
 app_router.init_app(app)
+pathlib.Path('/data/cache').mkdir(parents=True, exist_ok=True)
+pathlib.Path('/data/dowload').mkdir(parents=True, exist_ok=True)
+pathlib.Path('/data/upload').mkdir(parents=True, exist_ok=True)
 
 # from flask_caching import Cache
 # cache = Cache()

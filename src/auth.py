@@ -9,9 +9,7 @@ from dash.dependencies import Input, Output, State
 
 from src.config import password, user
 
-users = {
-    user: password
-}
+users = {user: password}
 
 
 def authenticate_user(credentials):

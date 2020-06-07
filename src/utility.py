@@ -6,8 +6,8 @@ import flask
 
 import pandas as pd
 
-import config as config
-import xml_excel_reader as xlsx
+import src.config as config
+import src.xml_excel_reader as xlsx
 
 from typing import Dict
 

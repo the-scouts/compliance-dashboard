@@ -1,7 +1,7 @@
-wheel
 dash==1.12.0
-pandas==1.0.3
-requests==2.23.0
-urllib3==1.25.9
-visdcc==0.0.40
-xlrd==1.2.0
+pandas>=1.0.4
+flask
+numpy
+lxml
+pyarrow
+python-dateutil

@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import dash_core_components as dcc
+import dash_html_components as html
 from dash.dependencies import ClientsideFunction, Input, Output, State
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from dash import Dash
+
 
 def Navbar(app: Dash, download: bool = False):
     return html.Nav([

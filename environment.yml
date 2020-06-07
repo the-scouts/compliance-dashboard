@@ -21,6 +21,9 @@ dependencies:
   - pytest
   - toml
   - isort
+#
+#  # ci
+#  - gunicorn
 
 #  # pip packages
 #  - pip

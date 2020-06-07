@@ -5,26 +5,23 @@ trigger:
 - master
 
 variables:
-  # Web app name
-  webAppName: $(projectName)
-
   # Agent VM image name
   vmImageName: 'ubuntu-latest'
 
-  # Environment name
-  environmentName: $(projectName)
-
   # Project root folder. Point to the folder containing manage.py file.
   projectRoot: $(System.DefaultWorkingDirectory)
-  
-  # Python version: 3.7
+  zipRoot: $(Build.ArtifactStagingDirectory)
+  buildId: $(Build.BuildId)
+
+  # Python version
   pythonVersion: '3.7'
 
 stages:
 - stage: Build
-  displayName: Build stage
+  displayName: Build app
   jobs:
   - job: BuildJob
+    displayName: "Build Job"
     pool:
       vmImage: $(vmImageName)
     steps:
@@ -32,15 +29,31 @@ stages:
       inputs:
         versionSpec: '$(pythonVersion)'
       displayName: 'Use Python $(pythonVersion)'
-    
+
     - script: |
         python -m venv antenv
         source antenv/bin/activate
         python -m pip install --upgrade pip
-        pip install setup
         pip install -r requirements.txt
       workingDirectory: $(projectRoot)
       displayName: "Install requirements"
+
+#    - bash: echo "##vso[task.prependpath]$CONDA/bin"
+#      displayName: "Add conda to PATH"
+#
+#    - script: |
+#        conda env create -v --quiet --force --file environment.yml -p $PWD/envs/compliance-dashboard
+#      displayName: "Install requirements"
+#
+#    # Show Conda Build Env
+#    - script: |
+#        echo "cwd:" `pwd`
+#        eval "$(conda shell.bash hook)"
+#        conda activate $PWD/envs/compliance-dashboard
+#        conda env list
+#        conda list
+#      displayName: 'Show build environment'
+#      continueOnError: true
 
     - task: ArchiveFiles@2
       displayName: 'Archive files'
@@ -48,37 +61,37 @@ stages:
         rootFolderOrFile: '$(projectRoot)'
         includeRootFolder: false
         archiveType: zip
-        archiveFile: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
+        archiveFile: $(zipRoot)/$(buildId).zip
         replaceExistingArchive: true
 
-    - upload: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
+    - upload: $(zipRoot)/$(buildId).zip
       displayName: 'Upload package'
       artifact: drop
 
 - stage: Deploy
-  displayName: 'Deploy Web App'
+  displayName: "Deploy app"
   dependsOn: Build
   condition: succeeded()
   jobs:
   - deployment: DeploymentJob
+    displayName: "Deploy Job"
     pool:
       vmImage: $(vmImageName)
-    environment: $(environmentName)
+    environment: $(projectName)
     strategy:
       runOnce:
         deploy:
           steps:
-          
           - task: UsePythonVersion@0
             inputs:
               versionSpec: '$(pythonVersion)'
-            displayName: 'Use Python version'
+            displayName: 'Use Python $(pythonVersion)'
 
           - task: AzureWebApp@1
-            displayName: 'Deploy Azure Web App - {{ projectName }}'
+            displayName: 'Deploy Azure Web App - $(projectName)'
             inputs:
               azureSubscription:  $(azureServiceConnectionId)
-              appName: $(webAppName)
+              appName: $(projectName)
               appType: 'webAppLinux'
-              package: $(Pipeline.Workspace)/drop/$(Build.BuildId).zip
-              startUpCommand: 'gunicorn --bind=0.0.0.0 --timeout=600 --workers=4 app:server'
+              package: $(Pipeline.Workspace)/drop/$(buildId).zip
+              startUpCommand: 'gunicorn --bind=0.0.0.0 --timeout=600 --workers=4 app:server'  #PATH="/home/site/wwwroot/envs/compliance-dashboard/bin:$PATH"

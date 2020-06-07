@@ -6,7 +6,7 @@ import dash_html_components as html
 from dash.dependencies import ClientsideFunction, Input, Output, State
 
 import src.create_dashbord_helper as create_dashbord_helper
-from src.components.navbar import Navbar
+import src.components.navbar as navbar
 
 
 def setup_callbacks(app: dash.Dash):
@@ -151,7 +151,7 @@ def _new_dashboard() -> html.Div:
 
 def new_dashboard(app: dash.Dash) -> html.Div:
     return html.Div([
-        Navbar(app),
+        navbar.Navbar(app),
         _new_dashboard(),
         html.Div(id="new-dash-popup", className="popup", style={"display": "none"}),
     ], className="page")
