@@ -98,7 +98,7 @@ if __name__ == '__main__':
     app.run_server(debug=True)
     server.logger.info("Running server!")
 else:
-    app.enable_dev_tools(debug=True)
+    app.enable_dev_tools(debug=True, dev_tools_hot_reload=False)
     gunicorn_logger = logging.getLogger('gunicorn.error')
     server.logger.handlers = gunicorn_logger.handlers
     server.logger.setLevel(gunicorn_logger.level)
