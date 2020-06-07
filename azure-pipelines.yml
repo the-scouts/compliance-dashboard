@@ -94,4 +94,4 @@ stages:
               appName: $(projectName)
               appType: 'webAppLinux'
               package: $(Pipeline.Workspace)/drop/$(buildId).zip
-              startUpCommand: 'gunicorn --bind=0.0.0.0 --timeout=600 --workers=4 app:server'  #PATH="/home/site/wwwroot/envs/compliance-dashboard/bin:$PATH"
+              startUpCommand: 'gunicorn --bind=0.0.0.0 --timeout=600 –-log-level info --workers=4 app:server'  #PATH="/home/site/wwwroot/envs/compliance-dashboard/bin:$PATH"

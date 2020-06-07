@@ -44,6 +44,7 @@ def create_upload_callback(app: dash.Dash, upload_id: str):
         if filename is None:
             raise dash.exceptions.PreventUpdate
         else:
+            app.server.logger.info(f"Processing uploaded file {filename}")
             report_processor = create_dashbord_helper.ReportProcessor(app, contents)
             report_processor.parse_data(filename)
         return _upload_text(children=html.H5(filename))
@@ -94,7 +95,7 @@ def create_button_callback(app: dash.Dash, button_id: str, compliance_upload_id:
 
         app.server.logger.info(f"Input validation took: {time.time() - start_time}")
 
-        reports_parser = create_dashbord_helper.ReportsParser(session_id=True)
+        reports_parser = create_dashbord_helper.ReportsParser(session_id=True, app=app)
         out = reports_parser.create_query_string(title, valid_disclosures)
         value = out["value"]
         app.server.logger.info(f"Report processing took: {time.time() - start_time}")

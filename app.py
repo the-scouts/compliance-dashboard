@@ -2,7 +2,6 @@ import pkg_resources
 
 import logging
 import flask
-import pathlib
 
 import dash
 import dash_core_components as dcc
@@ -10,7 +9,6 @@ import dash_html_components as html
 
 import src.config as config
 import src.index as index
-print("\n".join(f"{d.project_name} ({d.version})" for d in pkg_resources.working_set))
 
 app: dash.Dash = dash.Dash(
     __name__,

@@ -29,6 +29,10 @@ class ReportBase:
     def __init__(self, app: dash.Dash = None, session_id: bool = False):
         self.app: dash.Dash = app
 
+        # Set logger if app exists
+        if app:
+            self.logger = app.server.logger
+
         # Get flask session id. Must be in a flask request context.
         if session_id:
             self.session_id: str = utility.get_session_id()
@@ -39,8 +43,8 @@ class ReportBase:
 
 
 class ReportsParser(ReportBase):
-    def __init__(self, session_id: bool = False):
-        super().__init__(session_id=session_id)
+    def __init__(self, app: dash.Dash = None, session_id: bool = False):
+        super().__init__(app=app, session_id=session_id)
         self.parsed_data = {}
 
     def create_query_string(self, title: str, valid_disclosures: float) -> dict:
@@ -62,7 +66,7 @@ class ReportsParser(ReportBase):
             "RT": "RT",
             "RL": "RL",
         }
-        print("Parsing results")
+        self.logger.info("Parsing results")
         user_provided_values = {"appropriate_adults": valid_disclosures, "RT": title}
 
         parsed_values = self.get_parsed_values()
@@ -76,7 +80,7 @@ class ReportsParser(ReportBase):
         return utility.output_value(f"?params={encoded}", path=True)
 
     def get_parsed_values(self) -> dict:
-        print("Reading main sheets")
+        self.logger.info("Reading main sheets")
 
         def get_processed_workbooks_values():
             processed = config.get_from_cache("session_cache", self.session_id, "processed_workbooks") or {}
@@ -86,7 +90,7 @@ class ReportsParser(ReportBase):
         while not all(get_processed_workbooks_values()) and i < 90 / 0.25:
             time.sleep(0.25)
             i += 1
-        print("ALL PROCESSED!")
+        self.logger.info("ALL PROCESSED!")
 
         reports_paths = {}
         for paths_dict in [config.get_from_cache("b64_cache", code) for code in get_processed_workbooks_values()]:
@@ -101,7 +105,7 @@ class ReportsParser(ReportBase):
                 self.parsed_data[report_name][sheet_name] = frame
                 del frame
 
-        print("Calling store trend data")
+        self.logger.info("Calling store trend data")
         # TODO get trend data and use in report
         appt_props = self.read_appointments_report(self.parsed_data["Compliance"]["Appointments"])
         report_location = appt_props["location_name"]

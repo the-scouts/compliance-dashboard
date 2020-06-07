@@ -38,6 +38,12 @@ class DGIndex:
                        State("login-url", "search"),
                        State("download-url", "search"), ])
         def route_logins(_u1, _u2, _u3, _q1, _q2, _q3):
+            app.server.logger.debug("this is a DEBUG message")
+            app.server.logger.info("this is an INFO message")
+            app.server.logger.warning("this is a WARNING message")
+            app.server.logger.error("this is an ERROR message")
+            app.server.logger.critical("this is a CRITICAL message")
+            
             # Delete all input variables. We get the needed values through dash.callback_context
             del _u1, _u2, _u3, _q1, _q2, _q3
             ctx = dash.callback_context
