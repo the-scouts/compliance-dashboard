@@ -87,10 +87,13 @@ class ReportsParser(ReportBase):
             processed = config.get_from_cache("session_cache", self.session_id, "processed_workbooks") or {}
             return processed.values()
 
+        self.logger.info(f"Processed workbook vals: {get_processed_workbooks_values()}")
+
         i = 0
         while not all(get_processed_workbooks_values()) and i < 90 / 0.25:
             time.sleep(0.25)
             i += 1
+            self.logger.info(f"Processed workbook vals: {get_processed_workbooks_values()}")
         self.logger.info("ALL PROCESSED!")
 
         self.logger.info("b64 cache")
@@ -114,8 +117,13 @@ class ReportsParser(ReportBase):
         self.logger.info("Calling store trend data")
         # TODO get trend data and use in report
         self.logger.info(self.parsed_data.keys())
-        self.logger.info((self.parsed_data.get("Compliance") or {}).keys())
-        self.logger.info(((self.parsed_data.get("Compliance") or {}).get("Appointments") or {}).keys())
+        comp_dict = self.parsed_data.get("Compliance", {})
+        self.logger.info(comp_dict.keys())
+        try:
+            app_dict = comp_dict.get("Appointments", {})
+            self.logger.info(app_dict.keys())
+        except ValueError:
+            pass
         appt_props = self.read_appointments_report(self.parsed_data["Compliance"]["Appointments"])
         report_location = appt_props["location_name"]
 
