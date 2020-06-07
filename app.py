@@ -1,5 +1,5 @@
-import pkg_resources
-
+import random
+import os
 import logging
 import flask
 
@@ -99,10 +99,15 @@ if __name__ == '__main__':
     server.logger.info("Running server!")
 else:
     app.enable_dev_tools(debug=True, dev_tools_hot_reload=False)
+    debug_pin = os.environ["WERKZEUG_DEBUG_PIN"] = "-".join("".join([str(random.randint(0, 9)) for _ in range(3)]) for _ in range(4))
     gunicorn_logger = logging.getLogger('gunicorn.error')
     server.logger.handlers = gunicorn_logger.handlers
     server.logger.setLevel(gunicorn_logger.level)
+    server.logger.info("#############################################################")
+    server.logger.info("APP ENTRY POINT")
     server.logger.info("Running server on gunicorn")
+    server.logger.info("#############################################################")
+    server.logger.info(f"Debugger PIN: {debug_pin}")
 
 # TODO look into this maybe? serving from assets/css, assets/js etc.
 # # Serving local static files
