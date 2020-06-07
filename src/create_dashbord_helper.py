@@ -5,6 +5,7 @@ import json
 import math
 import threading
 import time
+import os
 from pathlib import Path
 from urllib import parse
 
@@ -92,9 +93,14 @@ class ReportsParser(ReportBase):
             i += 1
         self.logger.info("ALL PROCESSED!")
 
+        self.logger.info("b64 cache")
+        self.logger.info(config.global_path_cache_dict)
         reports_paths = {}
         for paths_dict in [config.get_from_cache("b64_cache", code) for code in get_processed_workbooks_values()]:
             reports_paths = {**reports_paths, **paths_dict}
+        self.logger.info("Reports Paths:")
+        self.logger.info(reports_paths)
+        self.logger.info(f"Debug pin: {os.environ['WERKZEUG_DEBUG_PIN']}")
 
         self.parsed_data = {}
         for report_name, sheets in reports_paths.items():
