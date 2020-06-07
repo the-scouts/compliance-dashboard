@@ -107,6 +107,9 @@ class ReportsParser(ReportBase):
 
         self.logger.info("Calling store trend data")
         # TODO get trend data and use in report
+        self.logger.info(self.parsed_data.keys())
+        self.logger.info((self.parsed_data.get("Compliance") or {}).keys())
+        self.logger.info(((self.parsed_data.get("Compliance") or {}).get("Appointments") or {}).keys())
         appt_props = self.read_appointments_report(self.parsed_data["Compliance"]["Appointments"])
         report_location = appt_props["location_name"]
 
@@ -137,6 +140,10 @@ class ReportsParser(ReportBase):
         return dict(location_name=location_name, has_children=has_children)
 
     def _parse_reports(self, compliance_sheets: dict = None, training_sheets: dict = None) -> dict:
+        self.logger.info("Parsed data keys:")
+        self.logger.info(self.parsed_data.keys())
+        self.logger.info((self.parsed_data.get("Compliance") or {}).keys())
+        self.logger.info((self.parsed_data.get("Training") or {}).keys())
         compliance_sheets = compliance_sheets or self.parsed_data["Compliance"]
         training_sheets = training_sheets or self.parsed_data["Training"]
 
