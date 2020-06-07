@@ -91,7 +91,7 @@ app_router.init_app(app)
 pathlib.Path('/data/cache').mkdir(parents=True, exist_ok=True)
 pathlib.Path('/data/dowload').mkdir(parents=True, exist_ok=True)
 pathlib.Path('/data/upload').mkdir(parents=True, exist_ok=True)
-
+app.enable_dev_tools(debug=True)
 # from flask_caching import Cache
 # cache = Cache()
 # cache.init_app(app.server, config={
