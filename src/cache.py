@@ -56,7 +56,7 @@ class CacheInterface:
 
     def set_to_cache(self, *path, value=None):
         """Access a value from the global cache"""
-        return self.cache.set(self._serialize_path(path), value)
+        return self.cache.set(self._serialize_path(*path), value)
 
     def build_tree(self):
         keys = self.r.keys()
@@ -99,7 +99,7 @@ class CacheInterface:
         except (FileNotFoundError, json.JSONDecodeError):
             return None
 
-        self.app.server.logger.info(self.r.keys())
+        self.app.server.logger.info(f"REDIS KEYS: {self.r.keys()}")
 
         parsed_json = {k: tuple(v) for k, v in loaded_json.items()}
         with self.r.lock("saving", timeout=5, blocking_timeout=2.5):
@@ -107,4 +107,5 @@ class CacheInterface:
                 timestamp = tpl[1]
                 if self.get_key_timestamp(key) < datetime.datetime.fromisoformat(timestamp):
                     value = tpl[0]
+                    self.app.server.logger.info(f"replacing key {key} with value {value}")
                     self.cache.set(key, value)

@@ -67,6 +67,8 @@ class DGIndex:
 
         @auth.validate_login_session
         def display_app_page(pathname, query):
+            app.server.logger.info(f"Redis keys: {self.cache.r.keys()}")
+
             if pathname in [None, "/", "/home"]:
                 return homepage.Homepage(app)
             elif pathname == "/report":
