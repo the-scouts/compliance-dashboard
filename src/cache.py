@@ -12,6 +12,8 @@ class CacheInterface:
     cache_path = config.DATA_ROOT / "cache" / "cache.json"
 
     def __init__(self, app: dash.Dash):
+        app.server.logger.info(f"REDIS: {config.redis_host} {config.redis_key}")
+
         self.cache: flask_caching.Cache = flask_caching.Cache(app.server, config=dict(
             CACHE_TYPE="redis",
             CACHE_REDIS_HOST=config.redis_host,
@@ -23,6 +25,7 @@ class CacheInterface:
         self.r: redis.Redis = self.cache.cache._read_clients  # NoQA
         self.key_prefix = self.cache.cache.key_prefix
         self.environment = "prod" if config.is_production else "dev"
+        self.app = app
 
     def _serialize_path(self, *path):
         return "/".join([self.environment, *path])
@@ -95,6 +98,8 @@ class CacheInterface:
             loaded_json = json.loads(self.cache_path.read_text(encoding="UTF8"))
         except (FileNotFoundError, json.JSONDecodeError):
             return None
+
+        self.app.server.logger.info(self.r.keys())
 
         parsed_json = {k: tuple(v) for k, v in loaded_json.items()}
         with self.r.lock("saving", timeout=5, blocking_timeout=2.5):
