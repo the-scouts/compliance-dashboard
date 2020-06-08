@@ -58,7 +58,7 @@ class DashbordGenerator:
         target_value = kwargs.pop("TV")
         components_properties = {k[:2]: [] for k in kwargs.keys()}
         for full_key, v in kwargs.items():
-            prev_trend_val = trend_dict[full_key]
+            prev_trend_val = trend_dict.get(full_key)
             key = full_key[:2]
             label = None
 
@@ -75,14 +75,14 @@ class DashbordGenerator:
             aim = 0
             actual = v
             compliant = v <= target_value
-            trend_up = v <= prev_trend_val
+            trend_up = v <= prev_trend_val if prev_trend_val else None
 
             if key == "AA":
                 aim = "100%"  # Render with percent sign
                 target = "98.5%"
                 actual = f"{v:.1f}%"
                 compliant = v >= 98.5  # Custom target value for disclosures
-                trend_up = v >= prev_trend_val
+                trend_up = v >= prev_trend_val if prev_trend_val else None
 
             components_properties[key].append(dict(
                 aim=aim,
@@ -104,7 +104,9 @@ class DashbordGenerator:
         num_props = len(component_properties)
         class_name = "component-stats component-stats-1" if num_props <= 2 else "component-stats component-stats-3"
         for target_props in component_properties:
-            trend = "happy" if target_props["trend_up"] else "sad"
+            trend = target_props["trend_up"]
+            if trend is not None:
+                trend = "happy" if target_props["trend_up"] else "sad"
             target_props["status"] = "compliant" if target_props["compliant"] else "non-compliant"
 
             component_stats.append(html.Div([
@@ -114,7 +116,7 @@ class DashbordGenerator:
                 ], className="component-aim"),
                 html.Div([
                     html.Span(f"Actual: {target_props['actual']}", className="component-actual-text"),
-                    html.Img(src=self._asset_path(f"{trend}.svg"), className="trend-svg"),
+                    html.Img(src=self._asset_path(f"{trend}.svg"), className="trend-svg") if trend is not None else None,
                 ], className=f"component-actual {target_props['status']}")
             ], className=class_name))
 

@@ -83,7 +83,7 @@ class CacheInterface:
         # Ensure state is not changed whilst getting data
         with self.r.lock("saving", timeout=5, blocking_timeout=2.5):
             keys = self.r.keys()
-            vals = self.cache.get_many(keys)
+            vals = self.cache.get_many(*[key.decode("UTF8") for key in keys])
             timestamps = []
             for key in keys:
                 timestamps.append(self.get_key_timestamp(key).isoformat())
