@@ -8,7 +8,6 @@ import dash_core_components as dcc
 import dash_html_components as html
 
 import src.cache as cache
-
 import src.config as config
 import src.index as index
 
