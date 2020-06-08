@@ -6,4 +6,4 @@ lxml
 pyarrow
 python-dateutil
 flask-caching
-redis-py
+redis

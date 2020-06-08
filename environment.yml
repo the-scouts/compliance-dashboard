@@ -15,7 +15,7 @@ dependencies:
   - pandas
   - pyarrow
   - python-dateutil
-  - redis
+  - redis-py
 
   # development
   - black
