@@ -6,13 +6,12 @@ import flask
 
 import pandas as pd
 
-import src.config as config
 import src.xml_excel_reader as xlsx
 
 from typing import Dict
 
 
-def read_workbooks(b64_data_list, app, included_worksheets: list = None, excluded_worksheets: list = None, session_id: str = None) -> Dict[str, Dict[str, pd.DataFrame]]:
+def read_workbooks(b64_data_list, app, cache, included_worksheets: list = None, excluded_worksheets: list = None, session_id: str = None) -> Dict[str, Dict[str, pd.DataFrame]]:
     front_sheets = {"Report Notes": "Compliance", "Notes": "Training"}
 
     def include_worksheet(worksheet: str) -> bool:
@@ -45,7 +44,7 @@ def read_workbooks(b64_data_list, app, included_worksheets: list = None, exclude
                             report_type = "Training"
 
                         # Mark workbook as processing:
-                        config.set_to_cache("session_cache", session_id, "processed_workbooks", report_type, value=False)
+                        cache.set_to_cache("session_cache", session_id, "processed_workbooks", report_type, value=False)
         except (zipfile.BadZipFile, ) as e:
             app.server.logger.warning(e)
             raise ValueError(output_value(f"This file can't be read, please check it is you have saved the {report_type} Assistant Report as an Excel file.", button=True))

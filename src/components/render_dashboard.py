@@ -93,7 +93,7 @@ class DashbordGenerator:
                 label=label,
             ))
 
-        components = pd.read_csv(config.DATA_ROOT / "compliance-components.csv", index_col=0)
+        components = pd.read_csv(config.DOWNLOAD_DIR / "compliance-components.csv", index_col=0)
         props_series = pd.Series(components_properties)
         components = components.merge(props_series.rename("Properties"), left_index=True, right_index=True)
 

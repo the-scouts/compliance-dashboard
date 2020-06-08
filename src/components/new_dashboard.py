@@ -9,10 +9,10 @@ import src.create_dashbord_helper as create_dashbord_helper
 import src.components.navbar as navbar
 
 
-def setup_callbacks(app: dash.Dash):
-    create_upload_callback(app, "compliance-report")
-    create_upload_callback(app, "training-report")
-    create_button_callback(app, "button", "compliance-report", "training-report")
+def setup_callbacks(app: dash.Dash, cache):
+    create_upload_callback(app, "compliance-report", cache)
+    create_upload_callback(app, "training-report", cache)
+    create_button_callback(app, "button", "compliance-report", "training-report", cache)
 
     # Show a waiting spinner on clicking the button
     app.clientside_callback(
@@ -35,7 +35,7 @@ def setup_callbacks(app: dash.Dash):
     )
 
 
-def create_upload_callback(app: dash.Dash, upload_id: str):
+def create_upload_callback(app: dash.Dash, upload_id: str, cache):
     @app.callback(Output(f"upload-{upload_id}", "children"),
                   [Input(f"upload-{upload_id}", "filename")],
                   [State(f"upload-{upload_id}", "contents")])
@@ -45,12 +45,12 @@ def create_upload_callback(app: dash.Dash, upload_id: str):
             raise dash.exceptions.PreventUpdate
         else:
             app.server.logger.info(f"Processing uploaded file {filename}")
-            report_processor = create_dashbord_helper.ReportProcessor(app, contents)
+            report_processor = create_dashbord_helper.ReportProcessor(app, contents, cache)
             report_processor.parse_data(filename)
         return _upload_text(children=html.H5(filename))
 
 
-def create_button_callback(app: dash.Dash, button_id: str, compliance_upload_id: str, training_upload_id: str):
+def create_button_callback(app: dash.Dash, button_id: str, compliance_upload_id: str, training_upload_id: str, cache):
     @app.callback([Output(button_id, "children"),
                    Output("url", "pathname"),
                    Output("url", "search"),
@@ -95,7 +95,7 @@ def create_button_callback(app: dash.Dash, button_id: str, compliance_upload_id:
 
         app.server.logger.info(f"Input validation took: {time.time() - start_time}")
 
-        reports_parser = create_dashbord_helper.ReportsParser(session_id=True, app=app)
+        reports_parser = create_dashbord_helper.ReportsParser(app=app, session_id=True, cache=cache)
         out = reports_parser.create_query_string(title, valid_disclosures)
         value = out["value"]
         app.server.logger.info(f"Report processing took: {time.time() - start_time}")

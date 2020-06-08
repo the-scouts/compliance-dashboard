@@ -7,6 +7,8 @@ import dash
 import dash_core_components as dcc
 import dash_html_components as html
 
+import src.cache as cache
+
 import src.config as config
 import src.index as index
 
@@ -83,16 +85,12 @@ def serve_report(path):
     return flask.send_from_directory(config.DOWNLOAD_DIR, path, as_attachment=True)
 
 
-print(f"{id(config.global_path_cache_dict)} app.py")
-app_router = index.DGIndex(app)
+redis_cache = cache.CacheInterface(app)
+redis_cache.load_from_disk()
+
+app_router = index.DGIndex(app, redis_cache)
 app_router.init_app(app)
 
-# from flask_caching import Cache
-# cache = Cache()
-# cache.init_app(app.server, config={
-#     'CACHE_TYPE': 'simple',
-#     # 'CACHE_DIR': config.DATA_ROOT / "cache"
-# })
 
 if __name__ == '__main__':
     app.run_server(debug=True)

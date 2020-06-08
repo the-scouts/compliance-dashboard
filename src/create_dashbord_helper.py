@@ -12,6 +12,7 @@ from urllib import parse
 import pandas as pd
 import pyarrow
 
+import src.cache as cache_int
 import src.config as config
 import src.utility as utility
 import src.xml_excel_reader as xlsx
@@ -27,8 +28,9 @@ if TYPE_CHECKING:
 # https://community.plotly.com/t/6199/4
 
 class ReportBase:
-    def __init__(self, app: dash.Dash = None, session_id: bool = False):
+    def __init__(self, app: dash.Dash = None, session_id: bool = False, cache: cache_int.CacheInterface = None):
         self.app: dash.Dash = app
+        self.cache: cache_int.CacheInterface = cache
 
         # Set logger if app exists
         if app:
@@ -44,8 +46,8 @@ class ReportBase:
 
 
 class ReportsParser(ReportBase):
-    def __init__(self, app: dash.Dash = None, session_id: bool = False):
-        super().__init__(app=app, session_id=session_id)
+    def __init__(self, app: dash.Dash = None, session_id: bool = False, cache=None):
+        super().__init__(app=app, session_id=session_id, cache=cache)
         self.parsed_data = {}
 
     def create_query_string(self, title: str, valid_disclosures: float) -> dict:
@@ -84,22 +86,20 @@ class ReportsParser(ReportBase):
         self.logger.info("Reading main sheets")
 
         def get_processed_workbooks_values():
-            processed = config.get_from_cache("session_cache", self.session_id, "processed_workbooks") or {}
+            processed = self.cache.get_dict_from_partial("session_cache", self.session_id, "processed_workbooks") or {}
             return processed.values()
 
         self.logger.info(f"Processed workbook vals: {get_processed_workbooks_values()}")
 
         i = 0
-        while not all(get_processed_workbooks_values()) and i < 90 / 0.25:
+        while not get_processed_workbooks_values() and len(get_processed_workbooks_values()) < 1 and i < 90 / 0.25:
             time.sleep(0.25)
             i += 1
             self.logger.info(f"Processed workbook vals: {get_processed_workbooks_values()}")
         self.logger.info("ALL PROCESSED!")
 
-        self.logger.info("b64 cache")
-        self.logger.info(config.global_path_cache_dict)
         reports_paths = {}
-        for paths_dict in [config.get_from_cache("b64_cache", code) for code in get_processed_workbooks_values()]:
+        for paths_dict in [self.cache.get_dict_from_partial("b64_cache", code) for code in get_processed_workbooks_values()]:
             reports_paths = {**reports_paths, **paths_dict}
         self.logger.info("Reports Paths:")
         self.logger.info(reports_paths)
@@ -133,7 +133,7 @@ class ReportsParser(ReportBase):
         parsed_values["has_children"] = appt_props["has_children"]
         del parsed_values["assistant_versions"]
 
-        self.run_thread(lambda_func=config.save_cache)
+        self.run_thread(lambda_func=self.cache.save_to_disk)
         return parsed_values
 
     @staticmethod
@@ -256,14 +256,14 @@ class ReportsParser(ReportBase):
 
 
 class ReportProcessor(ReportBase):
-    def __init__(self, app: dash.Dash, b64data: str):
-        super().__init__(app, session_id=True)
+    def __init__(self, app: dash.Dash, b64data: str, cache):
+        super().__init__(app, session_id=True, cache=cache)
         self.b64data = b64data
         self.hash_string = utility.str_from_hash(int(hashlib.sha256(b64data.encode()).hexdigest(), 16))
 
     def parse_data(self, name: str):
-        check_cache = False  # True
-        if config.get_from_cache("b64_cache", self.hash_string) and check_cache:
+        check_cache = True
+        if self.cache.get_keys_from_partial("b64_cache", self.hash_string) and check_cache:
             return
 
         now = time.strftime("%H%M%S")[1:-1]
@@ -277,7 +277,7 @@ class ReportProcessor(ReportBase):
         # atomic operations and thread safe
         # https://docs.python.org/3/faq/library.html#what-kinds-of-global-value-mutation-are-thread-safe
 
-        workbooks_data = utility.read_workbooks([self.b64data], self.app, excluded_worksheets=["Report", "Subtotal"], session_id=self.session_id)
+        workbooks_data = utility.read_workbooks([self.b64data], self.app, self.cache, excluded_worksheets=["Report", "Subtotal"], session_id=self.session_id)
 
         for workbook_name, workbook_data in workbooks_data.items():
             sheets = {}
@@ -293,8 +293,8 @@ class ReportProcessor(ReportBase):
                 sheets[sheet_name] = str(cache_filename)
 
             # Mark workbook as processed:
-            config.set_to_cache("session_cache", self.session_id, "processed_workbooks", workbook_name, value=self.hash_string)
-            config.set_to_cache("b64_cache", self.hash_string, workbook_name, value=sheets)
+            self.cache.set_to_cache("session_cache", self.session_id, "processed_workbooks", workbook_name, value=self.hash_string)
+            self.cache.set_to_cache("b64_cache", self.hash_string, workbook_name, value=sheets)
 
 
 def cell(frame: pd.DataFrame, coordinate: tuple, return_float: bool = False, convert_float: bool = False):

@@ -10,8 +10,10 @@ from src.components import homepage, navbar, new_dashboard, nopage, render_dashb
 
 
 class DGIndex:
-    def __init__(self, app: dash.Dash):
+    def __init__(self, app: dash.Dash, cache):
         self.app = app
+        self.cache = cache
+
         self.dg = None
 
         self._setup_callbacks()
@@ -21,7 +23,7 @@ class DGIndex:
 
     def _setup_callbacks(self):
         app = self.app
-        new_dashboard.setup_callbacks(app)
+        new_dashboard.setup_callbacks(app, self.cache)
         navbar.setup_callbacks(app)
         auth.setup_callbacks(app)
         self._routing_callback()
