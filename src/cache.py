@@ -17,7 +17,7 @@ class CacheInterface:
         self.cache: flask_caching.Cache = flask_caching.Cache(app.server, config=dict(
             CACHE_TYPE="redis",
             CACHE_REDIS_HOST=config.redis_host,
-            CACHE_REDIS_PASSWORD=config.redis_key,
+            CACHE_REDIS_PASSWORD="OFwueYfOjelJRYaFCbPZ0L4E6rlPzvLsGmyjLuIvVxU=",
             CACHE_REDIS_PORT=6380,
             CACHE_REDIS_DB=0,
             CACHE_OPTIONS={"ssl": True}
@@ -27,7 +27,7 @@ class CacheInterface:
         self.environment = "prod" if config.is_production else "dev"
         self.app = app
 
-    def _serialize_path(self, *path):
+    def _serialize_path(self, *path) -> str:
         return "/".join([self.environment, *path])
 
     @staticmethod
@@ -38,15 +38,19 @@ class CacheInterface:
             root = root[key]
         root[items[-1]] = value
 
-    def get_keys_from_partial(self, *path):
+    @staticmethod
+    def _keys_to_strings(keys: list, key_prefix: str = "") -> list:
+        return [key.decode("UTF8")[len(key_prefix):] for key in keys]  # TODO key.removeprefix(root) when py3.9 is released (Oct 20)
+
+    def get_keys_from_partial(self, *path) -> list:
         """Return a list of keys from the global cache"""
         return self.r.keys(f"{self.key_prefix}{self._serialize_path(*path)}*")
 
     def get_dict_from_partial(self, *path):
         keys = self.get_keys_from_partial(*path)
         root = self._serialize_path(*path) + "/"
-        keys = [key.decode("UTF8").lstrip(self.key_prefix) for key in keys]
-        results = {key[len(root):]: self.cache.get(key) for key in keys}  # TODO key.removeprefix(root) when py3.9 is released (Oct 20)
+        stringified_keys = self._keys_to_strings(keys, self.key_prefix)
+        results = {key[len(root):]: self.cache.get(key) for key in stringified_keys}  # TODO key.removeprefix(root) when py3.9 is released (Oct 20)
         tree = self._build_tree(results)
         return tree
 
@@ -83,13 +87,14 @@ class CacheInterface:
         # Ensure state is not changed whilst getting data
         with self.r.lock("saving", timeout=5, blocking_timeout=2.5):
             keys = self.r.keys()
-            vals = self.cache.get_many(*[key.decode("UTF8") for key in keys])
+            vals = self.cache.get_many(*self._keys_to_strings(keys, self.key_prefix))
             timestamps = []
             for key in keys:
                 timestamps.append(self.get_key_timestamp(key).isoformat())
 
+        stringified_keys = self._keys_to_strings(keys, self.key_prefix)
         vals_with_timestamps = [*zip(vals, timestamps)]
-        pairs = dict(zip(keys, vals_with_timestamps))
+        pairs = dict(zip(stringified_keys, vals_with_timestamps))
         json_pairs = json.dumps(pairs)
         self.cache_path.write_text(json_pairs, encoding="UTF8")
 

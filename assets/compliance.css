@@ -41,6 +41,8 @@
 .logo-image{
     width: calc(var(--vmin-em) * 9.375);
     height: auto;
+    /* As we're using a <img src=svg> rather than inline we can't use fill: #7413DC. Filter from codepen.io/pen/Pjoqqp */
+    filter: invert(12%) sepia(100%) saturate(5969%) hue-rotate(272deg) brightness(87%) contrast(101%);
 }
 
 .logo-text{

@@ -158,7 +158,7 @@ class DashbordGenerator:
                     ], className="legend-entry"),
                 ], className="legend"),
                 html.Div([
-                    html.Img(src=self._asset_path("scout-logo-purple-stack.png"), className="logo-image"),
+                    html.Img(src=self._asset_path("scout-logo-stack.svg"), className="logo-image"),
                     html.Span(f"{self.report_location}", className="logo-text")
                 ], className="logo")
 

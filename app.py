@@ -93,7 +93,8 @@ if __name__ != '__main__':
     server.logger.info("#############################################################")
     server.logger.info("Running server on gunicorn")
     server.logger.info(f"Debugger PIN: {debug_pin}")
-
+else:
+    server.logger.setLevel(logging.DEBUG)
 
 redis_cache = cache.CacheInterface(app)
 redis_cache.load_from_disk()

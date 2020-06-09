@@ -43,6 +43,7 @@ class ReportBase:
     @staticmethod
     def run_thread(lambda_func):
         threading.Thread(target=lambda_func).start()
+        threading.Thread(target=lambda_func).start()
 
 
 class ReportsParser(ReportBase):
@@ -85,21 +86,21 @@ class ReportsParser(ReportBase):
     def get_parsed_values(self) -> dict:
         self.logger.info("Reading main sheets")
 
-        def get_processed_workbooks_values():
+        def get_processed_workbooks_values() -> list:
             processed = self.cache.get_dict_from_partial("session_cache", self.session_id, "processed_workbooks") or {}
-            return processed.values()
-
-        self.logger.info(f"Processed workbook vals: {get_processed_workbooks_values()}")
+            return list(processed.values())
 
         i = 0
-        while not get_processed_workbooks_values() and len(get_processed_workbooks_values()) < 1 and i < 90 / 0.25:
+        processed_wbs = get_processed_workbooks_values()
+        while (not all(processed_wbs) or len(processed_wbs) == 0) and i < 90 / 0.25:
+            self.logger.info(f"Processed workbook vals: {processed_wbs}")
             time.sleep(0.25)
             i += 1
-            self.logger.info(f"Processed workbook vals: {get_processed_workbooks_values()}")
+            processed_wbs = get_processed_workbooks_values()
         self.logger.info("ALL PROCESSED!")
 
         reports_paths = {}
-        for paths_dict in [self.cache.get_dict_from_partial("b64_cache", code) for code in get_processed_workbooks_values()]:
+        for paths_dict in [self.cache.get_dict_from_partial("b64_cache", code) for code in processed_wbs]:
             reports_paths = {**reports_paths, **paths_dict}
         self.logger.info("Reports Paths:")
         self.logger.info(reports_paths)
@@ -249,7 +250,7 @@ class ReportsParser(ReportBase):
             trends = pd.DataFrame(columns=['Location', 'Include Descendents', 'Date', 'JSON'])
 
         trend_props["JSON"] = json.dumps(trend_props["JSON"])
-        idx_cols = trend_props.copy().pop("JSON").keys()
+        idx_cols = [k for k in trend_props if k != "JSON"]
         new_trends = trends.append(trend_props, ignore_index=True).drop_duplicates(subset=idx_cols)  # can't drop_duplicates with non-hashable
         if not trends.equals(new_trends):  # Only save if changed
             new_trends.to_feather(trends_path)
