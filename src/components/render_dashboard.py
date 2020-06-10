@@ -45,15 +45,23 @@ class DashbordGenerator:
 
     def _set_components(self, trend_keys: dict, **kwargs):
         try:
-            trends_df = pd.read_feather(config.DOWNLOAD_DIR / "trends.feather").set_index(["Location", "Include Descendents", "Date"])
+            trends_df = pd.read_feather(config.DOWNLOAD_DIR / "trends.feather")
+            trends_df["Date"] = pd.to_datetime(trends_df["Date"])
+            trends_df = trends_df.set_index(["Location", "Include Descendents", "Date"])
         except (FileNotFoundError, pyarrow.lib.ArrowInvalid):
             trend_dict = {}
         else:
             valid_periods = trends_df.xs([trend_keys["location"], trend_keys["children"]])
             prior_periods = valid_periods.loc[valid_periods.index < pd.to_datetime(trend_keys["date"]), "JSON"]
-            trend_period = prior_periods.iloc[0]  # TODO implement time-based getting instead of first entry before period
-            trend_date = prior_periods.index[0]
-            trend_dict = json.loads(trend_period)
+
+            # Might be no valid trend values
+            try:
+                trend_period = prior_periods.iloc[0]  # TODO implement time-based getting instead of first entry before period
+            except IndexError:
+                trend_dict = {}
+            else:
+                trend_date = prior_periods.index[0]
+                trend_dict = json.loads(trend_period)
 
         target_value = kwargs.pop("TV")
         components_properties = {k[:2]: [] for k in kwargs.keys()}
