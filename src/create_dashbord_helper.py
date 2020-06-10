@@ -245,7 +245,6 @@ class ReportsParser(ReportBase):
         trends_path = config.DOWNLOAD_DIR / "trends.feather"
         try:
             trends = pd.read_feather(trends_path)
-            trends.astype()
         except (FileNotFoundError, pyarrow.lib.ArrowInvalid):
             trends = pd.DataFrame(columns=['Location', 'Include Descendents', 'Date', 'JSON'])
 

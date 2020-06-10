@@ -62,6 +62,10 @@ class DashbordGenerator:
             else:
                 trend_date = prior_periods.index[0]
                 trend_dict = json.loads(trend_period)
+                try:
+                    trend_dict = json.loads(trend_dict)
+                except TypeError:
+                    pass
 
         target_value = kwargs.pop("TV")
         components_properties = {k[:2]: [] for k in kwargs.keys()}
