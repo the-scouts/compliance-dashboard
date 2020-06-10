@@ -46,6 +46,10 @@ class CacheInterface:
         """Return a list of keys from the global cache"""
         return self.r.keys(f"{self.key_prefix}{self._serialize_path(*path)}*")
 
+    def get_string_keys_from_partial(self, *path) -> list:
+        keys = self.get_keys_from_partial(*path)
+        return self._keys_to_strings(keys, key_prefix=self.key_prefix)
+
     def get_dict_from_partial(self, *path):
         keys = self.get_keys_from_partial(*path)
         root = self._serialize_path(*path) + "/"
@@ -85,7 +89,8 @@ class CacheInterface:
 
     def save_to_disk(self):
         # Ensure state is not changed whilst getting data
-        with self.r.lock("saving", timeout=5, blocking_timeout=2.5):
+        lock_key = "saving"
+        with self.r.lock(lock_key, timeout=5, blocking_timeout=2.5):
             keys = self.r.keys()
             vals = self.cache.get_many(*self._keys_to_strings(keys, self.key_prefix))
             timestamps = []
@@ -95,6 +100,21 @@ class CacheInterface:
         stringified_keys = self._keys_to_strings(keys, self.key_prefix)
         vals_with_timestamps = [*zip(vals, timestamps)]
         pairs = dict(zip(stringified_keys, vals_with_timestamps))
+        pairs.pop(lock_key, None)
+        pairs.pop("", None)
+        try:
+            old_json = json.loads(self.cache_path.read_text(encoding="UTF8"))
+        except (FileNotFoundError, json.JSONDecodeError):
+            old_json = {}
+
+        missing_tuple = (None, '1970-01-01T00:00:00')
+        for key, tpl in old_json.items():
+            pairs_tpl = pairs.get(key, missing_tuple)
+            old_timestamp = datetime.datetime.fromisoformat(tpl[1])
+
+            if old_timestamp < datetime.datetime.fromisoformat(pairs_tpl[1]):
+                pairs[key] = tpl
+
         json_pairs = json.dumps(pairs)
         self.cache_path.write_text(json_pairs, encoding="UTF8")
 

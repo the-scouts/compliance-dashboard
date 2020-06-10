@@ -118,13 +118,7 @@ class ReportsParser(ReportBase):
         self.logger.info("Calling store trend data")
         # TODO get trend data and use in report
         self.logger.info(self.parsed_data.keys())
-        comp_dict = self.parsed_data.get("Compliance", {})
-        self.logger.info(comp_dict.keys())
-        try:
-            app_dict = comp_dict.get("Appointments", {})
-            self.logger.info(app_dict.keys())
-        except ValueError:
-            pass
+        self.logger.info(self.parsed_data.get("Compliance", {}).keys())
         appt_props = self.read_appointments_report(self.parsed_data["Compliance"]["Appointments"])
         report_location = appt_props["location_name"]
 
@@ -157,8 +151,8 @@ class ReportsParser(ReportBase):
     def _parse_reports(self, compliance_sheets: dict = None, training_sheets: dict = None) -> dict:
         self.logger.info("Parsed data keys:")
         self.logger.info(self.parsed_data.keys())
-        self.logger.info((self.parsed_data.get("Compliance") or {}).keys())
-        self.logger.info((self.parsed_data.get("Training") or {}).keys())
+        self.logger.info((self.parsed_data.get("Compliance", {})).keys())
+        self.logger.info((self.parsed_data.get("Training", {})).keys())
         compliance_sheets = compliance_sheets or self.parsed_data["Compliance"]
         training_sheets = training_sheets or self.parsed_data["Training"]
 
@@ -263,7 +257,10 @@ class ReportProcessor(ReportBase):
 
     def parse_data(self, name: str):
         check_cache = True
-        if self.cache.get_keys_from_partial("b64_cache", self.hash_string) and check_cache:
+        keys = self.cache.get_dict_from_partial("b64_cache", self.hash_string)
+        if keys and check_cache:
+            sheet = next(iter(keys.keys()))
+            self.cache.set_to_cache("session_cache", self.session_id, "processed_workbooks", sheet, value=self.hash_string)
             return
 
         now = time.strftime("%H%M%S")[1:-1]
