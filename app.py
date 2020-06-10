@@ -85,14 +85,14 @@ def serve_report(path):
 
 
 if __name__ != '__main__':
-    app.enable_dev_tools(debug=True, dev_tools_hot_reload=False)
-    debug_pin = os.environ["WERKZEUG_DEBUG_PIN"] = "-".join("".join([str(random.randint(0, 9)) for _ in range(3)]) for _ in range(4))
+    # app.enable_dev_tools(debug=True, dev_tools_hot_reload=False)
+    # debug_pin = os.environ["WERKZEUG_DEBUG_PIN"] = "".join([str(random.randint(0, 9)) for _ in range(5)])
     gunicorn_logger = logging.getLogger('gunicorn.error')
     server.logger.handlers = gunicorn_logger.handlers
     server.logger.setLevel(gunicorn_logger.level)
     server.logger.info("#############################################################")
     server.logger.info("Running server on gunicorn")
-    server.logger.info(f"Debugger PIN: {debug_pin}")
+    # server.logger.info(f"Debugger PIN: {debug_pin}")
 else:
     server.logger.setLevel(logging.DEBUG)
 
