@@ -78,6 +78,7 @@ class ReportsParser(ReportBase):
         parameters = {key_map.get(k) or k: v for k, v in values.items()}
 
         trend_data = {"Location": parameters["RL"], "Include Descendents": parameters.pop("has_children"), "Date": parameters["DD"], "JSON": parameters}
+        self.logger.debug(f"trend_data: {trend_data}")
         self.run_thread(lambda_func=lambda: self.save_trends(trend_data))
 
         encoded = base64.urlsafe_b64encode(parse.urlencode(parameters).encode()).decode("UTF8")
@@ -117,9 +118,10 @@ class ReportsParser(ReportBase):
 
         self.logger.info("Calling store trend data")
         # TODO get trend data and use in report
-        self.logger.info(self.parsed_data.keys())
-        self.logger.info(self.parsed_data.get("Compliance", {}).keys())
+        self.logger.debug(self.parsed_data.keys())
+        self.logger.debug(self.parsed_data.get("Compliance", {}).keys())
         appt_props = self.read_appointments_report(self.parsed_data["Compliance"]["Appointments"])
+        self.logger.info(f"Appointments Props: {appt_props}")
         report_location = appt_props["location_name"]
 
         parsed_values = self._parse_reports()
@@ -137,7 +139,10 @@ class ReportsParser(ReportBase):
         location_columns = [11, 12, 13]
         locations = appointments_sheet.rename(columns=appointments_sheet.iloc[0]).iloc[data_start_row:, location_columns].fillna("").drop_duplicates()
 
-        location_name = ""  # UK/National has a blank logo
+        # filter out empty columns:
+        locations = locations.replace("", pd.NA).dropna(axis=1)
+
+        location_name = " "  # UK/National has a blank logo
         has_children = False
         multi_index = pd.MultiIndex.from_frame(locations).levels
         for i, level in enumerate(multi_index):
@@ -252,13 +257,14 @@ class ReportsParser(ReportBase):
 class ReportProcessor(ReportBase):
     def __init__(self, app: dash.Dash, b64data: str, cache):
         super().__init__(app, session_id=True, cache=cache)
+        self.check_cache = True
+
         self.b64data = b64data
         self.hash_string = utility.str_from_hash(int(hashlib.sha256(b64data.encode()).hexdigest(), 16))
 
     def parse_data(self, name: str):
-        check_cache = True
         keys = self.cache.get_dict_from_partial("b64_cache", self.hash_string)
-        if keys and check_cache:
+        if keys and self.check_cache:
             sheet = next(iter(keys.keys()))
             self.cache.set_to_cache("session_cache", self.session_id, "processed_workbooks", sheet, value=self.hash_string)
             return
