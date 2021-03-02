@@ -3,7 +3,7 @@ from __future__ import annotations
 import dash_core_components as dcc
 import dash_html_components as html
 
-from src.components.navbar import Navbar
+from src.components import navbar
 
 from typing import TYPE_CHECKING
 
@@ -11,15 +11,15 @@ if TYPE_CHECKING:
     from dash import Dash
 
 
-def noPage(app: Dash):
+def noPage(app: Dash) -> html.Div:
     return html.Div([
         # CC Header
-        Navbar(app),
+        navbar.Navbar(app),
         page_not_found()
     ], className="page")
 
 
-def page_not_found():
+def page_not_found() -> html.Div:
     return html.Div([
         html.H3("The page you requested does't exist."),
         dcc.Link([

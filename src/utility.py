@@ -1,27 +1,35 @@
+from __future__ import annotations
 import base64
 import io
 import zipfile
 
 import flask
 
-import pandas as pd
-
 import src.xml_excel_reader as xlsx
 
-from typing import Dict
+from typing import Dict, Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import dash
+
+    import pandas as pd
+
+    import src.cache as cache_int
 
 
-def read_workbooks(b64_data_list, app, cache, included_worksheets: list = None, excluded_worksheets: list = None, session_id: str = None) -> Dict[str, Dict[str, pd.DataFrame]]:
+def read_workbooks(
+        b64_data_list: list[str],
+        app: dash.Dash,
+        cache: cache_int.CacheInterface,
+        included_worksheets: Optional[list[str]] = None,
+        excluded_worksheets: Optional[list[str]] = None,
+        session_id: str = "dummy"
+) -> Dict[str, Dict[str, pd.DataFrame]]:
     front_sheets = {"Report Notes": "Compliance", "Notes": "Training"}
-
-    def include_worksheet(worksheet: str) -> bool:
-        if excluded_worksheets is not None:
-            return worksheet not in excluded_worksheets
-        if included_worksheets is None:
-            return True
-        return worksheet in included_worksheets
-
-    session_id = session_id or "dummy"
+    if included_worksheets is None:
+        included_worksheets = []
+    if excluded_worksheets is None:
+        excluded_worksheets = []
 
     workbooks = {}
     for data in b64_data_list:
@@ -31,7 +39,7 @@ def read_workbooks(b64_data_list, app, cache, included_worksheets: list = None, 
             data = data.split(",")[1]
 
             with xlsx.XMLExcelReader(io.BytesIO(base64.b64decode(data))) as xls:
-                sheets_to_open = [s for s in xls.sheet_names if include_worksheet(s)]
+                sheets_to_open = [s for s in xls.sheet_names if (s not in excluded_worksheets) and (s in included_worksheets if excluded_worksheets else True)]
                 for sheet in sheets_to_open:
                     sheets[sheet] = xls.read(sheet_name=sheet)
 
@@ -45,7 +53,7 @@ def read_workbooks(b64_data_list, app, cache, included_worksheets: list = None, 
 
                         # Mark workbook as processing:
                         cache.set_to_cache("session_cache", session_id, "processed_workbooks", report_type, value=False)
-        except (zipfile.BadZipFile, ) as e:
+        except zipfile.BadZipFile as e:
             app.server.logger.warning(e)
             raise ValueError(output_value(f"This file can't be read, please check it is you have saved the {report_type} Assistant Report as an Excel file.", button=True))
         except PermissionError as e:
@@ -55,8 +63,8 @@ def read_workbooks(b64_data_list, app, cache, included_worksheets: list = None, 
     return workbooks
 
 
-def get_session_id():
-    return flask.session.get("s_id")
+def get_session_id() -> str:
+    return str(flask.session.get("s_id"))  # FIXME shouldn't need to  wrap with str, but mypy complains
 
 
 def str_from_hash(hash_code: int) -> str:
@@ -66,7 +74,7 @@ def str_from_hash(hash_code: int) -> str:
     return base64.urlsafe_b64encode(hash_code.to_bytes(num_bytes, "big", signed=True)).decode("UTF8")
 
 
-def output_value(value: str, button: bool = False, path: bool = False) -> dict:
+def output_value(value: str, button: bool = False, path: bool = False) -> dict[str, str]:
     if not button != path:
         raise ValueError("Exactly one of button or path must be set!")
 

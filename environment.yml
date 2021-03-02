@@ -3,7 +3,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python>=3.7
+  - python>=3.9
 
   # dash packages
   - dash
@@ -16,12 +16,15 @@ dependencies:
   - pyarrow
   - python-dateutil
   - redis-py
+  - pydantic
 
   # development
   - black
   - pytest
   - toml
   - isort
+  - mypy
+  - ipython
 #
 #  # ci
 #  - gunicorn

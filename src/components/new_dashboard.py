@@ -1,15 +1,23 @@
 import time
 
 import dash
+from dash.dependencies import ClientsideFunction, Input, Output, State
 import dash_core_components as dcc
 import dash_html_components as html
-from dash.dependencies import ClientsideFunction, Input, Output, State
 
-import src.create_dashbord_helper as create_dashbord_helper
-import src.components.navbar as navbar
+from src import create_dashbord_helper
+from src.components import navbar
+
+from typing import Optional, TYPE_CHECKING, Union
+
+if TYPE_CHECKING:
+    from dash.dash import _NoUpdate
+    from dash.development.base_component import Component
+
+    from src import cache as cache_int
 
 
-def setup_callbacks(app: dash.Dash, cache):
+def setup_callbacks(app: dash.Dash, cache: cache_int.CacheInterface) -> None:
     create_upload_callback(app, "compliance-report", cache)
     create_upload_callback(app, "training-report", cache)
     create_button_callback(app, "button", "compliance-report", "training-report", cache)
@@ -35,7 +43,7 @@ def setup_callbacks(app: dash.Dash, cache):
     )
 
 
-def create_upload_callback(app: dash.Dash, upload_id: str, cache):
+def create_upload_callback(app: dash.Dash, upload_id: str, cache: cache_int.CacheInterface) -> None:
     @app.callback(Output(f"upload-{upload_id}", "children"),
                   [Input(f"upload-{upload_id}", "filename")],
                   [State(f"upload-{upload_id}", "contents")])
@@ -50,7 +58,7 @@ def create_upload_callback(app: dash.Dash, upload_id: str, cache):
         return _upload_text(children=html.H5(filename))
 
 
-def create_button_callback(app: dash.Dash, button_id: str, compliance_upload_id: str, training_upload_id: str, cache):
+def create_button_callback(app: dash.Dash, button_id: str, compliance_upload_id: str, training_upload_id: str, cache: cache_int.CacheInterface) -> None:
     @app.callback([Output(button_id, "children"),
                    Output("url", "pathname"),
                    Output("url", "search"),
@@ -61,7 +69,7 @@ def create_button_callback(app: dash.Dash, button_id: str, compliance_upload_id:
                    State("input-title", "value"),
                    State("input-disclosures", "value"), ],
                   prevent_initial_call=True)
-    def update_button(clicked: int, c_contents: str, t_contents: str, title: str, valid_disclosures: float) -> tuple:
+    def update_button(clicked: int, c_contents: str, t_contents: str, title: str, valid_disclosures: float) -> tuple[Union[str, _NoUpdate], ...]:
         # TODO accept only CSV/XLS(X)?
 
         # Short circuit if empty
@@ -70,10 +78,10 @@ def create_button_callback(app: dash.Dash, button_id: str, compliance_upload_id:
 
         start_time = time.time()
         ctx = dash.callback_context
-        num_outputs = len(ctx.outputs_list)
+        num_outputs = len(ctx.outputs_list)  # TODO check this is 4
 
-        def update_button_text(new_text: str) -> tuple:
-            return (new_text,) + (dash.no_update, ) * (num_outputs - 1)
+        def update_button_text(new_text: str) -> tuple[str, _NoUpdate, _NoUpdate, _NoUpdate]:
+            return new_text, dash.no_update, dash.no_update, dash.no_update
 
         # Check all values are present
         inputs = [
@@ -95,7 +103,7 @@ def create_button_callback(app: dash.Dash, button_id: str, compliance_upload_id:
 
         app.server.logger.info(f"Input validation took: {time.time() - start_time}")
 
-        reports_parser = create_dashbord_helper.ReportsParser(app=app, session_id=True, cache=cache)
+        reports_parser = create_dashbord_helper.ReportsParser(cache=cache, app=app, session_id=True)
         out = reports_parser.create_query_string(title, valid_disclosures)
         value = out["value"]
         app.server.logger.info(f"Report processing took: {time.time() - start_time}")
@@ -107,7 +115,7 @@ def create_button_callback(app: dash.Dash, button_id: str, compliance_upload_id:
             return update_button_text(out["value"])
 
 
-def _upload_text(file_desc: str = None, children: str = None) -> html.Div:
+def _upload_text(file_desc: Optional[str] = None, children: Optional[Union[str, Component]] = None) -> html.Div:
     if children is None:
         children = [
             html.Span(f"Upload a {file_desc}"),
