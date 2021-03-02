@@ -3,7 +3,7 @@ from __future__ import annotations
 import dash_core_components as dcc
 import dash_html_components as html
 
-from src.components.navbar import Navbar
+from src.components import navbar
 
 from typing import TYPE_CHECKING
 
@@ -23,8 +23,8 @@ body = html.Div([
 ], className="page-container static-container vertical-center home")
 
 
-def Homepage(app: Dash):
+def Homepage(app: Dash) -> html.Div:
     return html.Div([
-        Navbar(app),
+        navbar.Navbar(app),
         body
     ], className="page")

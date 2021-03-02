@@ -3,11 +3,13 @@ import base64
 import hashlib
 import json
 import math
-import threading
-import time
 import os
 from pathlib import Path
+import threading
+import time
 from urllib import parse
+
+import pydantic
 
 import pandas as pd
 import pyarrow
@@ -17,9 +19,11 @@ import src.config as config
 import src.utility as utility
 import src.xml_excel_reader as xlsx
 
-from typing import TYPE_CHECKING
+from typing import Any, Optional, TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     import dash
 
 
@@ -28,8 +32,8 @@ if TYPE_CHECKING:
 # https://community.plotly.com/t/6199/4
 
 class ReportBase:
-    def __init__(self, app: dash.Dash = None, session_id: bool = False, cache: cache_int.CacheInterface = None):
-        self.app: dash.Dash = app
+    def __init__(self, cache: cache_int.CacheInterface, app: Optional[dash.Dash] = None, session_id: bool = False):
+        self.app: Optional[dash.Dash] = app
         self.cache: cache_int.CacheInterface = cache
 
         # Set logger if app exists
@@ -41,17 +45,17 @@ class ReportBase:
             self.session_id: str = utility.get_session_id()
 
     @staticmethod
-    def run_thread(lambda_func):
+    def run_thread(lambda_func: Callable[[], Any]) -> None:
         threading.Thread(target=lambda_func).start()
         threading.Thread(target=lambda_func).start()
 
 
 class ReportsParser(ReportBase):
-    def __init__(self, app: dash.Dash = None, session_id: bool = False, cache=None):
-        super().__init__(app=app, session_id=session_id, cache=cache)
-        self.parsed_data = {}
+    def __init__(self, cache: cache_int.CacheInterface, app: Optional[dash.Dash] = None, session_id: bool = False):
+        super().__init__(cache=cache, app=app, session_id=session_id)
+        self.parsed_data: dict[str, dict[str, pd.DataFrame]] = {}
 
-    def create_query_string(self, title: str, valid_disclosures: float) -> dict:
+    def create_query_string(self, title: str, valid_disclosures: float) -> dict[str, str]:
         key_map = {
             "appropriate_adults": "AA",
             "appropriate_roles": "AR",
@@ -74,20 +78,20 @@ class ReportsParser(ReportBase):
         user_provided_values = {"appropriate_adults": valid_disclosures, "RT": title}
 
         parsed_values = self.get_parsed_values()
-        values = {**user_provided_values, **parsed_values}
+        values = {**user_provided_values, **parsed_values.__dict__}
         parameters = {key_map.get(k) or k: v for k, v in values.items()}
 
-        trend_data = {"Location": parameters["RL"], "Include Descendents": parameters.pop("has_children"), "Date": parameters["DD"], "JSON": parameters}
+        trend_data = {"Location": parsed_values.RL, "Include Descendents": parsed_values.has_children, "Date": parsed_values.data_date, "JSON": parameters}
         self.logger.debug(f"trend_data: {trend_data}")
         self.run_thread(lambda_func=lambda: self.save_trends(trend_data))
 
         encoded = base64.urlsafe_b64encode(parse.urlencode(parameters).encode()).decode("UTF8")
         return utility.output_value(f"?params={encoded}", path=True)
 
-    def get_parsed_values(self) -> dict:
+    def get_parsed_values(self) -> ParsedData:
         self.logger.info("Reading main sheets")
 
-        def get_processed_workbooks_values() -> list:
+        def get_processed_workbooks_values() -> list[str]:
             processed = self.cache.get_dict_from_partial("session_cache", self.session_id, "processed_workbooks") or {}
             return list(processed.values())
 
@@ -100,14 +104,13 @@ class ReportsParser(ReportBase):
             processed_wbs = get_processed_workbooks_values()
         self.logger.info("ALL PROCESSED!")
 
-        reports_paths = {}
+        reports_paths: dict[str, dict[str, str]] = {}
         for paths_dict in [self.cache.get_dict_from_partial("b64_cache", code) for code in processed_wbs]:
-            reports_paths = {**reports_paths, **paths_dict}
+            reports_paths |= paths_dict
         self.logger.info("Reports Paths:")
         self.logger.info(reports_paths)
         self.logger.info(f"Debug pin: {os.environ['WERKZEUG_DEBUG_PIN']}")
 
-        self.parsed_data = {}
         for report_name, sheets in reports_paths.items():
             self.parsed_data[report_name] = {}
             for sheet_name, sheet_path in sheets.items():
@@ -125,16 +128,20 @@ class ReportsParser(ReportBase):
         report_location = appt_props["location_name"]
 
         parsed_values = self._parse_reports()
-        parsed_values["data_date"] = parsed_values["data_date"].get("compliance") or parsed_values["data_date"].get("training")
-        parsed_values["RL"] = report_location
-        parsed_values["has_children"] = appt_props["has_children"]
-        del parsed_values["assistant_versions"]
+        data_date = parsed_values.data_date.compliance or parsed_values.data_date.training or None,
+        pruned_parsed = {key: value for key, value in parsed_values if key not in {'assistant_versions', 'data_date'}}
+
+        metadata = {
+            "data_date": data_date,
+            "RL": report_location,
+            "has_children": appt_props["has_children"],
+        }
 
         self.run_thread(lambda_func=self.cache.save_to_disk)
-        return parsed_values
+        return ParsedData(**pruned_parsed, **metadata)
 
     @staticmethod
-    def read_appointments_report(appointments_sheet: pd.DataFrame) -> dict:
+    def read_appointments_report(appointments_sheet: pd.DataFrame) -> dict[str, Union[str, Optional[bool]]]:
         data_start_row = 7
         location_columns = [11, 12, 13]
         locations = appointments_sheet.rename(columns=appointments_sheet.iloc[0]).iloc[data_start_row:, location_columns].fillna("").drop_duplicates()
@@ -143,7 +150,7 @@ class ReportsParser(ReportBase):
         locations = locations.replace("", pd.NA).dropna(axis=1)
 
         location_name = " "  # UK/National has a blank logo
-        has_children = False
+        has_children: Optional[bool] = False
         multi_index = pd.MultiIndex.from_frame(locations).levels
         for i, level in enumerate(multi_index):
             if len(level) != 1:
@@ -153,7 +160,7 @@ class ReportsParser(ReportBase):
 
         return dict(location_name=location_name, has_children=has_children)
 
-    def _parse_reports(self, compliance_sheets: dict = None, training_sheets: dict = None) -> dict:
+    def _parse_reports(self, compliance_sheets: Optional[dict[str, pd.DataFrame]] = None, training_sheets: Optional[dict[str, pd.DataFrame]] = None) -> ReportsData:
         self.logger.info("Parsed data keys:")
         self.logger.info(self.parsed_data.keys())
         self.logger.info((self.parsed_data.get("Compliance", {})).keys())
@@ -222,7 +229,7 @@ class ReportsParser(ReportBase):
 
         target_val = int(10 ** round(math.log(total_roles) / 2 - 2, 0)) if total_roles >= 150 else 1
 
-        return dict(
+        return ReportsData(
             appropriate_roles=overdue_full_roles,
             getting_started_1=overdue_getting_started,
             getting_started_2=overdue_personal_learning_plan,
@@ -235,12 +242,12 @@ class ReportsParser(ReportBase):
             total_adults=total_adults,
             total_roles=total_roles,
             target_value=target_val,
-            assistant_versions=assistant_versions,
-            data_date=data_date,
+            assistant_versions=ReportsAssistantVersions(**assistant_versions),
+            data_date=ReportsDataDate(**data_date),
         )
 
     @staticmethod
-    def save_trends(trend_props: dict):
+    def save_trends(trend_props: dict[str, Any]) -> None:
         trends_path = config.DOWNLOAD_DIR / "trends.feather"
         try:
             trends = pd.read_feather(trends_path)
@@ -255,14 +262,14 @@ class ReportsParser(ReportBase):
 
 
 class ReportProcessor(ReportBase):
-    def __init__(self, app: dash.Dash, b64data: str, cache):
-        super().__init__(app, session_id=True, cache=cache)
+    def __init__(self, app: dash.Dash, b64data: str, cache: cache_int.CacheInterface):
+        super().__init__(cache=cache, app=app, session_id=True)
         self.check_cache = True
 
         self.b64data = b64data
         self.hash_string = utility.str_from_hash(int(hashlib.sha256(b64data.encode()).hexdigest(), 16))
 
-    def parse_data(self, name: str):
+    def parse_data(self, name: str) -> None:
         keys = self.cache.get_dict_from_partial("b64_cache", self.hash_string)
         if keys and self.check_cache:
             sheet = next(iter(keys.keys()))
@@ -276,7 +283,7 @@ class ReportProcessor(ReportBase):
         self.run_thread(lambda_func=lambda: filename.write_bytes(data))
         self.run_thread(lambda_func=lambda: self.process_uploaded_data(filename))
 
-    def process_uploaded_data(self, filename: Path):
+    def process_uploaded_data(self, filename: Path) -> None:
         # atomic operations and thread safe
         # https://docs.python.org/3/faq/library.html#what-kinds-of-global-value-mutation-are-thread-safe
 
@@ -300,10 +307,46 @@ class ReportProcessor(ReportBase):
             self.cache.set_to_cache("b64_cache", self.hash_string, workbook_name, value=sheets)
 
 
-def cell(frame: pd.DataFrame, coordinate: tuple, return_float: bool = False, convert_float: bool = False):
+def cell(frame: pd.DataFrame, coordinate: tuple[int, int], return_float: bool = False, convert_float: bool = False) -> Union[float, int]:
     y = coordinate[0]
     x = coordinate[1]
     val = frame.iat[y, x]
     if return_float:
         return float(val)
     return int(float(val) if convert_float else val)
+
+
+class ReportsDataDate(pydantic.BaseModel):
+    compliance: Optional[str]
+    training: Optional[str]
+
+
+class ReportsAssistantVersions(pydantic.BaseModel):
+    compliance: Optional[Union[float, int]]
+    training: Optional[Union[float, int]]
+
+
+class ReportsDataCore(pydantic.BaseModel):
+    appropriate_roles: Union[float, int]
+    getting_started_1: Union[float, int]
+    getting_started_2: Union[float, int]
+    getting_started_3_4: Union[float, int]
+    gdpr: Union[float, int]
+    managing_safety: Union[float, int]
+    safe_spaces: Union[float, int]
+    preparedness: Union[float, int]
+    knowledge: Union[float, int]
+    total_adults: Union[float, int]
+    total_roles: Union[float, int]
+    target_value: Union[float, int]
+
+
+class ReportsData(ReportsDataCore):
+    assistant_versions: ReportsAssistantVersions
+    data_date: ReportsDataDate
+
+
+class ParsedData(ReportsDataCore):
+    data_date: Optional[str]
+    RL: str
+    has_children: bool

@@ -4,6 +4,7 @@ import json
 from urllib import parse
 
 import dateutil.parser
+import pydantic
 
 import dash_core_components as dcc
 import dash_html_components as html
@@ -11,45 +12,44 @@ import dash_html_components as html
 import pandas as pd
 import pyarrow
 
+from src.components import navbar
 import src.config as config
-from src.components.navbar import Navbar
 
-from typing import TYPE_CHECKING
+from typing import Any, Optional, TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
     from dash import Dash
 
 
 class DashbordGenerator:
-    def __init__(self, app):
+    def __init__(self, app: Dash):
         self.report_name: str = ""
         self.data_date: str = ""
         self.report_location: str = ""
         self.num_adults: int = 0
         self.num_roles: int = 0
-        self.component_list: list = []
-        self.compliance_components: list = []
+        self.compliance_components: list[html.Div] = []
         self.app: Dash = app
 
-    def _set_info(self, report_name: str, data_date: str, report_location: str):
+    def _set_info(self, report_name: str, data_date: str, report_location: str) -> None:
         self.report_name = report_name
         self.data_date = dateutil.parser.parse(data_date).strftime("%B %Y")
         self.report_location = report_location
 
-    def _set_people(self, num_adults: int, num_roles: int):
+    def _set_people(self, num_adults: int, num_roles: int) -> None:
         self.num_adults = num_adults
         self.num_roles = num_roles
 
-    def _asset_path(self, asset_file: str):
-        return self.app.get_asset_url(asset_file)
+    def _asset_path(self, asset_file: str) -> str:
+        return str(self.app.get_asset_url(asset_file))  # FIXME wrapping in str unecessary but MyPy doesn't understand Dash types. Remove when Dash type hints.
 
-    def _set_components(self, trend_keys: dict, **kwargs):
+    def _set_components(self, trend_keys: dict[str, Union[str, bool]], params: ParamsModel) -> None:
         try:
             trends_df = pd.read_feather(config.DOWNLOAD_DIR / "trends.feather")
             trends_df["Date"] = pd.to_datetime(trends_df["Date"])
             trends_df = trends_df.set_index(["Location", "Include Descendents", "Date"])
         except (FileNotFoundError, pyarrow.lib.ArrowInvalid):
-            trend_dict = {}
+            trend_dict: dict[str, Union[int, float]] = {}   # TODO check int float
         else:
             valid_periods = trends_df.xs([trend_keys["location"], trend_keys["children"]])
             prior_periods = valid_periods.loc[valid_periods.index < pd.to_datetime(trend_keys["date"]), "JSON"]
@@ -58,24 +58,27 @@ class DashbordGenerator:
             try:
                 trend_period = prior_periods.iloc[0]  # TODO implement time-based getting instead of first entry before period
             except IndexError:
-                trend_dict = {}
+                trend_dict = {}   # TODO check int float
             else:
                 trend_date = prior_periods.index[0]
-                trend_dict = json.loads(trend_period)
+                trend_dict_unparsed: Union[str, dict[str, Union[int, float]]] = json.loads(str(trend_period))   # TODO check double JSON FIXME shouldn't need to pass through str
                 try:
-                    trend_dict = json.loads(trend_dict)
-                except TypeError:
-                    pass
+                    assert isinstance(trend_dict_unparsed, str)
+                    trend_dict = json.loads(trend_dict_unparsed)
+                except (AssertionError, TypeError):
+                    assert isinstance(trend_dict_unparsed, dict)
+                    trend_dict = dict(trend_dict_unparsed)
 
-        target_value = kwargs.pop("TV")
-        components_properties = {k[:2]: [] for k in kwargs.keys()}
-        for full_key, v in kwargs.items():
+        target_value = params.tv
+        core_params = CoreParams(**params.__dict__)
+        components_properties: dict[str, list[dict[str, Union[float, int, bool, str, None]]]] = {k[:2]: [] for k, _v in core_params}
+        for full_key, v in core_params:
             prev_trend_val = trend_dict.get(full_key)
             key = full_key[:2]
             label = None
 
             if key not in ["WB", "GS"]:
-                target = target_value
+                target: Union[float, int, str] = target_value
             elif key == "WB":
                 target = target_value / 2  # Custom target value for woodbadges
             elif key == "GS":
@@ -84,10 +87,10 @@ class DashbordGenerator:
             else:
                 target = target_value
 
-            aim = 0
-            actual = v
+            aim: Union[int, str] = 0
+            actual: Union[float, int, str] = v
             compliant = v <= target_value
-            trend_up = v <= prev_trend_val if prev_trend_val else None
+            trend_up: Optional[bool] = v <= prev_trend_val if prev_trend_val else None
 
             if key == "AA":
                 aim = "100%"  # Render with percent sign
@@ -111,7 +114,7 @@ class DashbordGenerator:
 
         self.compliance_components = [self._create_component(c['Subheads'], c['Descriptions'], c['Colours'], c["Properties"]) for c in components.to_dict('records')]
 
-    def _create_component(self, head: str, desc: str, colour: str, component_properties: list):
+    def _create_component(self, head: str, desc: str, colour: str, component_properties: list[dict[str, Any]]) -> html.Div:
         component_stats = []
         num_props = len(component_properties)
         class_name = "component-stats component-stats-1" if num_props <= 2 else "component-stats component-stats-3"
@@ -140,18 +143,18 @@ class DashbordGenerator:
             *component_stats
         ], className=f"component-info {colour}")
 
-    def _setup_dashboard(self, params):
-        data_date = params.pop("DD")
-        total_adults = params.pop("TA")
-        total_roles = params.pop("TR")
-        report_title = params.pop("RT")
-        report_location = params.pop("RL")
+    def _setup_dashboard(self, params: ParamsModel) -> None:
+        data_date = params.dd
+        total_adults = params.ta
+        total_roles = params.tr
+        report_title = params.rt
+        report_location = params.rl
         self._set_info(report_name=report_title, data_date=data_date, report_location=report_location)
         self._set_people(num_adults=total_adults, num_roles=total_roles)
-        trends_keys = dict(location=report_location, children=True, date=data_date)  # TODO data date needs to be before
-        self._set_components(trends_keys, **params)
+        trends_keys: dict[str, Union[str, bool]] = dict(location=report_location, children=True, date=data_date)  # TODO data date needs to be before
+        self._set_components(trends_keys, params)
 
-    def _generate_dashboard(self):
+    def _generate_dashboard(self) -> html.Div:
         if not (self.report_name and self.data_date and self.report_location and self.num_adults and self.num_roles):
             raise AttributeError("Make sure all values are set before calling generate(). Have you called set_info and set_people?")
 
@@ -185,10 +188,10 @@ class DashbordGenerator:
         ], className="page-container vertical-center app-container", id="report-container")
 
     # Entry point
-    def get_dashboard(self, query):
+    def get_dashboard(self, query: str) -> html.Div:
         if not query:
             return html.Div([
-                Navbar(self.app),
+                navbar.Navbar(self.app),
                 html.Div([
                     html.H3("Report not found"),
                     html.H4([
@@ -200,17 +203,33 @@ class DashbordGenerator:
             ], className="page")
 
         param_string = parse.parse_qsl(query)[0][1]
-        param_dict = {k: v for k, v in parse.parse_qsl(base64.urlsafe_b64decode(param_string.encode()).decode("UTF8"))}
-        for k, v in param_dict.items():
-            try:
-                param_dict[k] = int(v) if "." not in v else float(v)
-            except ValueError:
-                param_dict[k] = v if v else None
-
-        self._setup_dashboard(param_dict)
+        split = {k.lower(): v for k, v in parse.parse_qsl(base64.urlsafe_b64decode(param_string.encode()).decode("UTF8"))}
+        self._setup_dashboard(ParamsModel(**split))
 
         return html.Div([
-            Navbar(self.app, download=True),
+            navbar.Navbar(self.app, download=True),
             self._generate_dashboard(),
             html.Div(id="download-popup", className="popup", style={"display": "none"})
         ], className="page")
+
+
+class CoreParams(pydantic.BaseModel):
+    aa: float
+    ar: Union[float, int]
+    gs1: Union[float, int]
+    gs2: Union[float, int]
+    gs34: Union[float, int]
+    dp: Union[float, int]
+    sa: Union[float, int]
+    sf: Union[float, int]
+    fa: Union[float, int]
+    wb: Union[float, int]
+
+
+class ParamsModel(CoreParams):
+    ta: int
+    tr: int
+    tv: int
+    dd: str
+    rt: str
+    rl: str

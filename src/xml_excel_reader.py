@@ -1,11 +1,18 @@
+from __future__ import annotations
 import datetime
 import io
 import re
+from types import TracebackType
 import zipfile
 
-from lxml import etree as etree
+from lxml import etree
 
 import pandas as pd
+
+from typing import BinaryIO, Optional, TYPE_CHECKING, Union
+
+if TYPE_CHECKING:
+    import os
 
 
 class XMLExcelReader:
@@ -33,16 +40,16 @@ class XMLExcelReader:
 
     numbers = re.compile(r'[0-9]+')
 
-    def __init__(self, file_path_or_buffer):
-        self.fh = zipfile.ZipFile(file_path_or_buffer)
-        self.shared = self.load_shared()
-        self.workbook = self.load_workbook()
+    def __init__(self, file_path_or_buffer: Union[io.BytesIO, BinaryIO, os.PathLike[str], str]):
+        self.fh: zipfile.ZipFile = zipfile.ZipFile(file_path_or_buffer)
+        self.shared: dict[str, str] = self.load_shared()
+        self.workbook: dict[str, str] = self.load_workbook()
 
     @property
-    def sheet_names(self):
+    def sheet_names(self) -> list[str]:
         return list(self.workbook.keys())
 
-    def load_workbook(self):
+    def load_workbook(self) -> dict[str, str]:
         """Load workbook's sheet index"""
         r = "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}"
         name = 'xl/workbook.xml'
@@ -50,21 +57,20 @@ class XMLExcelReader:
         res = {el.attrib['name']: el.attrib[f"{r}id"].lstrip("rId") for el in self.get_worksheets(root)}
         return res
 
-    def load_shared(self):
+    def load_shared(self) -> dict[str, str]:
         """Load shared strings"""
-        name = 'xl/sharedStrings.xml'
-        root = etree.parse(self.fh.open(name))
+        root = etree.parse(self.fh.open("xl/sharedStrings.xml"))
 
         # res = etree.XPath("/ns:sst/ns:si/string()", namespaces=self.namespaces, smart_strings=False)(root)  # Works in XPath 2.0
 
         return {str(pos): self.stringify(el) for pos, el in enumerate(self.string_extractor(root))}
 
-    def _parse_sheet(self, root):
+    def _parse_sheet(self, root: etree.ElementTree) -> pd.DataFrame:
         """Parse XML tree to stacked CSV"""
         result = self.transform(root)
         return pd.read_csv(io.StringIO(str(result)), header=None, dtype="str", names=['row', 'cell', 'type', 'value'])
 
-    def read(self, sheet_name, row_start: int = None, col_range: tuple = None):
+    def read(self, sheet_name: str, row_start: Optional[int] = None, col_range: Optional[tuple[int, int]] = None) -> pd.DataFrame:
         """Read sheet name to pandas dataframe"""
         min_col = col_range[0] if col_range is not None else None
         max_col = col_range[1] + 1 if col_range is not None else None
@@ -104,14 +110,14 @@ class XMLExcelReader:
 
         return df.iloc[row_start:, min_col:max_col].reset_index(drop=True)
 
-    def __enter__(self):
+    def __enter__(self) -> XMLExcelReader:
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, exc_type: Optional[type[BaseException]], exc_value: Optional[BaseException], traceback: Optional[TracebackType]) -> None:
         self.fh.close()
 
     @staticmethod
-    def _num_to_name(n):
+    def _num_to_name(n: int) -> str:
         """Number to Excel-style column name,
 
         e.g., 1 = A, 26 = Z, 42 = AP, 18278 = ZZZ. (Limit of Excel is 16384=XFD)
@@ -123,7 +129,7 @@ class XMLExcelReader:
         return name
 
     @staticmethod
-    def _name_to_num(name):
+    def _name_to_num(name: str) -> int:
         """Excel-style column name to number, e.g., A = 1, Z = 26, AA = 27, AAA = 703."""
         return int("".join([str(1 + ord(c) - ord('A')) for c in name.upper()]), base=26)
 

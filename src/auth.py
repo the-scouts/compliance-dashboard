@@ -1,18 +1,25 @@
+from collections.abc import Callable
 import functools
 
 from flask import session
 
 import dash
+from dash.dependencies import Input, Output, State
 import dash_core_components as dcc
 import dash_html_components as html
-from dash.dependencies import Input, Output, State
 
-from src.config import password, user
+from src.config import password
+from src.config import user
+
+from typing import Any, Optional, TypeVar, Union
 
 users = {user: password}
 
+# https://mypy.readthedocs.io/en/stable/generics.html#declaring-decorators
+F = TypeVar('F', bound=Callable[..., Any])
 
-def authenticate_user(credentials):
+
+def authenticate_user(credentials: tuple[Optional[str], Optional[str]]) -> bool:
     """
     generic authentication function
     returns True if user is correct and False otherwise
@@ -26,14 +33,15 @@ def authenticate_user(credentials):
     return authed
 
 
-def validate_login_session(f):
+def validate_login_session(f: F) -> Union[F, html.Div]:
     """
     takes a layout function that returns layout objects
     checks if the user is logged in or not through the session.
     If not, returns an error with link to the login page
     """
     @functools.wraps(f)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> Union[F, html.Div]:
+        # return f(*args, **kwargs)
         if session.get("authed"):
             return f(*args, **kwargs)
         return html.Div(
@@ -48,7 +56,7 @@ def validate_login_session(f):
 
 
 # login layout content
-def login_layout():
+def login_layout() -> html.Div:
     return html.Div(
         html.Div([
             html.H4("Login"),
@@ -62,7 +70,7 @@ def login_layout():
     )
 
 
-def setup_callbacks(app: dash.Dash):
+def setup_callbacks(app: dash.Dash) -> None:
     # authenticate
     @app.callback(
         [Output("login-url", "pathname"),
@@ -72,7 +80,7 @@ def setup_callbacks(app: dash.Dash):
          State("login-password", "value"),
          State("old-url", "data"), ],
         prevent_initial_call=True)
-    def login_auth(_, username, pw, pathname):
+    def login_auth(_: int, username: Optional[str], pw: Optional[str], pathname: str) -> Union[tuple[dash.no_update, html.Div], tuple[str, str]]:
         """
         check credentials
         if correct, authenticate the session
@@ -82,7 +90,7 @@ def setup_callbacks(app: dash.Dash):
             pathname = "/home"
 
         credentials = (username, pw)
-        if credentials.count(None) == len(credentials):
+        if credentials == (None, None):
             return dash.no_update, dash.no_update
 
         if authenticate_user(credentials):
