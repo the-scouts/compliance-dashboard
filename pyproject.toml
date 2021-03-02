@@ -1,29 +1,15 @@
 [tool.black]
 line-length = 180
-exclude = '''
-/(
-    \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | venv
-  | _build
-  | buck-out
-  | build
-  | dist
-  | setup.py
-)/
-'''
+target-version = ["py38"]  # Remember to change this if we change pins from Python 3.9!  TODO black does not yet support 3.9 (13-01-2021)
 
 [tool.isort]
 line_length = 180
-skip_glob = '\.eggs/*,\.git/*,\.venv/*,build/*,dist/*'
+profile = "google"
+py_version = "39"
+skip_gitignore = true
 no_lines_before = "STDLIB"
 single_line_exclusions = ["dash.dependencies", "typing", "dependencies"]
-# force_single_line = "True" wait until isort 5
 known_dash = ["dash", "dash_core_components", "dash_html_components", "dash.dependencies"]
 known_pandas = ["pandas", "numpy", "pyarrow"]
 known_typing = "typing"
-sections = ["FUTURE","STDLIB","THIRDPARTY","DASH","PANDAS","FIRSTPARTY","LOCALFOLDER","TYPING"]
+sections = ["FUTURE", "STDLIB", "THIRDPARTY", "DASH"," PANDAS", "FIRSTPARTY", "LOCALFOLDER", "TYPING"]
